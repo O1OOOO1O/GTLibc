@@ -11,7 +11,7 @@ and not shall be portable or to target other OS like **_Linux_,_MAC OS_** etc.
 and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make reading/writing ,finding Game process easier and convenient.
 
 ## **_Your support is needed to keep this project alive, Feel free to donate._**
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GAS9SD3H7DYGY)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/haseebmir91)
 
 # Main Components :
 
@@ -94,7 +94,7 @@ If you tried to access methods of **GT**_Console_ library without using MACRO **
 
 ## Error/Exception Handling :
 
-All the error/exception handling is done by library itself like if you tried read or write from **Invalid Memory section** or if process id,game handle/HWND are invalid  it will automatically handle error and exits application with error code. So you don't have to check for any error.
+All the error/exception handling is done by library itself like if you tried read or write from **Invalid Memory section** or if process id,game handle/HWND are invalid  it will automatically handle error.So you don't have to check for any error by yourself
 
 ![game_not_found](https://github.com/haseeb-heaven/GTLibc/blob/master/resources/game_not_found.jpg?raw=true "")
 
@@ -133,6 +133,8 @@ but private methods are not documented as it was not necessary to do so.
 GTLIBC Version : V 1.0  Dated : 23/03/2018.<br/>
 GTLIBC Version : V 1.1  Dated : 12/04/2018.<br/>
 GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
+GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
+GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
 **[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
