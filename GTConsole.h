@@ -17,6 +17,7 @@ and to provide a layer on top of WIN-32 API cumbersome console methods and to ma
 1)Console methods : Changing/clearing console text or background --> use GT_SetConsoleTextColor(), GT_SetConsoleBGColor(), GT_ClearConsoleText() etc methods.
 2)Window methods : Change/Move/resize window --> use GT_SetWindowTitle() , GT_SetWindowStyle(), GT_ResizeWindow(), GT_DisableWindowStyle() etc methods.
 3)Cursor methods : Show/hide/Move/reset cursor  --> use GT_ShowConsoleCursor(),GT_WriteConsoleXY(), GT_SetConsoleCursorXY(), GT_ResetConsole() methods.
+4)Font methods : Set/Get/Print/ font  --> use GT_GetFontSize(),GT_SetFontSize(), GT_WriteConsoleFont().
 */
 
 /*=================================*/
@@ -24,10 +25,11 @@ and to provide a layer on top of WIN-32 API cumbersome console methods and to ma
 /*=================================*/
 
 /*
-4)Loading bar : Show loading bar animation on console  --> use GT_ShowLoadingBar() method.
-5)Console/Window Handle : Get Console Standard handle or Console Window handle --> use GT_GetConsoleStdHandle(), GT_GetConsoleWindowHandle() methods.
-6)Formatted Text :  Read/Write/Blink formatted text --> use GT_BlinkConsoleText(), GT_ReadConsole(), GT_WriteConsole() methods.
-7)Trainer specific :  Create Trainer menu or play/stop sound --> Use GT_CreateMenu(), GT_PlaySound(), GT_StopSound methods.
+5)Loading bar : Show loading bar animation on console  --> use GT_ShowLoadingBar() method.
+6)Console/Window Handle : Get Console Standard handle or Console Window handle --> use GT_GetConsoleStdHandle(), GT_GetConsoleWindowHandle() methods.
+7)Flush/clear input buffer : Flush or clear input buffer --> use GT_FlushInputBuffer(), GT_FlushConsoleInputBuffer() methods.
+8)Formatted Text :  Read/Write/Blink formatted text --> use GT_BlinkConsoleText(), GT_ReadConsole(), GT_WriteConsole() methods.
+9)Trainer specific :  Create Trainer menu or play/stop sound --> Use GT_CreateMenu(), GT_PlaySound(), GT_StopSound methods.
 
 NOTE : This is standalone library and this doesn't need GTLibc to work, it can be included alone in project ,
 or if you want to use with GTLibc then define GT_BUILD_CLI and include GTLibc only.
@@ -41,9 +43,15 @@ All Public and Semi-Private methods are well documented.
 but private methods are not documented as it was not necessary to do so.
 
 VERSION INFO :
-GTConsole Version : V 1.0
+GTConsole Version : V 1.1
+
+WHATS NEW IN THIS VERSION  v1.1 :
+[+] Added support for console Fonts.
+[+] Added support for clearing input buffer, including characters.
+[+] Fixed GT_ResizeWindow() method for rows and cols issue.
 
 V 1.0 -> Dated : 23/04/2018
+V 1.1 -> Dated : 30/12/2018
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -125,9 +133,18 @@ BOOL GT_DisableWindowStyle(INT,LONG_PTR);
 BOOL GT_DisableWindowScrollbar(LONG_PTR);
 BOOL GT_GetWindowScreenInfo(INT,PCOORD,PCOORD,PWORD,PSMALL_RECT,PCOORD);
 
+/*Public console fonts methods.*/
+BOOL GT_GetFontSize(HANDLE,BOOL,PCOORD);
+BOOL GT_SetFontSize(FLOAT,BOOL);
+void GT_WriteConsoleFont(FLOAT,BOOL,LPCSTR, ...);
+
 /*Public console cursor methods.*/
 BOOL GT_ShowConsoleCursor(BOOL);
 DWORD GT_WriteConsoleXY(INT,INT,LPCSTR, ...);
+
+/*Public flush buffer methods.*/
+VOID GT_FlushInputBuffer(CHAR);
+BOOL GT_FlushConsoleInputBuffer(HANDLE);
 
 /*Public loading bar method.*/
 VOID GT_ShowLoadingBar(UINT,UINT,UINT,UINT,UINT,UINT);

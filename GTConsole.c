@@ -267,7 +267,7 @@ BOOL GT_ResizeWindow(LONG win_xPos, LONG win_yPos, LONG win_width, LONG win_heig
 {
     //set console window size.
     HWND console_hwnd = GT_GetConsoleWindowHandle();
-    RECT rect = { win_xPos,win_yPos,win_width,win_height };
+    RECT rect = { win_xPos,win_yPos,win_height,win_width};
     return MoveWindow(console_hwnd, rect.top, rect.left, rect.bottom - rect.top, rect.right - rect.left, TRUE);
 }
 
@@ -483,6 +483,119 @@ DWORD GT_WriteConsoleXY(INT string_x, INT string_y, LPCSTR format, ...)
     gt_private_cmethod = FALSE;
     return dw_nChars;
 }
+
+/**
+ * @description - Get the current font size of console.
+ * @param - handle - A handle to the console screen buffer. The handle must have the GENERIC_WRITE.
+  *max_window - If this parameter is TRUE, font information is set for the maximum window size. If this parameter is FALSE, font information is set for the current window size.
+  * coord_size[Out] - Buffer to receive current size of fonts. Must be of type COORD.
+ * @return -If the function succeeds, the return value is nonzero. If the function fails, the return value is zero
+*/
+
+BOOL GT_GetFontSize(HANDLE handle,BOOL max_window,PCOORD coord_size)
+{
+    BOOL font_status = FALSE;
+    CONSOLE_FONT_INFOEX font = { sizeof(CONSOLE_FONT_INFOEX) };
+
+    if (!GetCurrentConsoleFontEx(handle,max_window,&font))
+    {
+        font_status =  FALSE;
+    }
+    else
+    {
+        *coord_size = font.dwFontSize;
+        font_status = TRUE;
+    }
+
+    return font_status;
+}
+
+/**
+ * @description - Set the new font size of console.
+ * @param
+ * size_percent - Size of fonts in percent must be a float value.
+  *max_window - If this parameter is TRUE, font information is set for the maximum window size. If this parameter is FALSE, font information is set for the current window size.
+ * @return -If the function succeeds, the return value is nonzero. If the function fails, the return value is zero
+*/
+
+BOOL GT_SetFontSize(FLOAT size_percent,BOOL max_window)
+{
+    BOOL font_status = FALSE;
+    CONSOLE_FONT_INFOEX font = { sizeof(CONSOLE_FONT_INFOEX) };
+    HANDLE handle = GT_GetConsoleStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord_size;
+
+    if (!GetCurrentConsoleFontEx(handle,max_window, &font))
+    {
+        font_status = FALSE;
+    }
+
+    else if (GT_GetFontSize(handle,max_window,&coord_size))
+    {
+        /* Grow by coord_size percent% */
+        coord_size.X += (SHORT)(coord_size.X * size_percent);
+        coord_size.Y += (SHORT)(coord_size.Y * size_percent);
+        font.dwFontSize = coord_size;
+        font_status = TRUE;
+    }
+
+    if (!SetCurrentConsoleFontEx(handle,max_window, &font))
+    {
+        font_status = FALSE;
+    }
+
+    return font_status;
+}
+
+/**
+ * @description - Write the text with font size.
+ * @param
+ * size_percent - Size of fonts in percent must be a float value.
+  *max_window - If this parameter is TRUE, font information is set for the maximum window size. If this parameter is FALSE, font information is set for the current window size.
+ * format - Text to print on console with or without arguments.
+*/
+
+void GT_WriteConsoleFont(FLOAT size_percent,BOOL max_window,LPCSTR format, ...)
+{
+    GT_SetFontSize(size_percent,max_window);
+    GT_WriteConsole(format);
+}
+
+/**
+ * @description - Flush the input buffer in case of character.
+ * @param
+ * ch - Character designated with input buffer.
+*/
+
+VOID GT_FlushInputBuffer(CHAR ch)
+{
+    while(ch == '\n' || ch == '\r')
+        GT_ReadConsole(&ch,1,CONSOLE_READ_CHAR);
+}
+
+/**
+ * @description - Flushes the console input buffer. All input records currently in the input buffer are discarded.
+ * @param
+ * A handle to the console input buffer. The handle must have the GENERIC_WRITE access right.
+* @return -If the function succeeds, the return value is nonzero. If the function fails, the return value is zero
+*/
+
+BOOL GT_FlushConsoleInputBuffer(HANDLE console_handle)
+{
+    BOOL flush_status = FALSE;
+    if(console_handle == INVALID_HANDLE_VALUE)
+    {
+        GT_ShowCError(gt_cerror_code, FUNC_NAME, LINE_NO);
+        flush_status = FALSE;
+    }
+    else
+    {
+        FlushConsoleInputBuffer(console_handle);
+        flush_status = TRUE;
+    }
+    return  flush_status;
+}
+
 
 /**
  * @description - Shows loading bar on current console.

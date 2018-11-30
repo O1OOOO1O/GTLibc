@@ -104,8 +104,6 @@ Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 #define GT_NIL 0x0 	/*Integer NULL*/
 #define GT_NUL '\0' 	/*Character NULL*/
 #define GT_NULL ((void *)0) /*Pointer NULL*/
-//#define GT_NANF ((float *)(0.0f/0.0f)) /*Float NAN*/
-//#define GT_NAND ((double *)(0.0/0.0)) /*Double NAN*/
 
 #define GT_HotKeysPressed(...) GT_HotKeysDown(__VA_ARGS__, NULL)
 
