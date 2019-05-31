@@ -13,6 +13,8 @@ and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make
 ## **_Your support is needed to keep this project alive, Feel free to donate._**
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/haseebmir91)
 
+## Do check our new game-library for Python aswell [GTLibPy](https://github.com/haseeb-heaven/GTLibPy)
+
 # Main Components :
 
 ## Finding game : 
