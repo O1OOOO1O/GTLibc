@@ -35,6 +35,7 @@ From the beginning of trainer development till end, it provides all necessary me
 10)Write JMP/CALL assembly instruction --> use  GT_WriteJmpOrCall() method.
 11)Shellcode injection tool included in this library --> use GT_InjectShellCode() method.
 12)DLL injection tool included in this library --> use GT_InjectDLL() method.
+13)Inject Assembly directly into process using --> use GT_InjectAsm() with utility GT_GetJmpBackAddress().
 
 NOTE : This ain't memory scanning,hooking,analyzing library, it won't provide methods for scanning/signature or dumping RAW memory.
 
@@ -74,11 +75,20 @@ WHATS NEW IN THIS VERSION  V 1.4 :
 [+] Improved all read/write methods to adapt generic data types.
 [+] Added new Macros for NULL and NIL.
 
+WHATS NEW IN THIS VERSION  V 1.5 :
+[+] Added new DLL methods for Injecting Assembly code.
+[+] Added new macro GT_BUILD_DLL for Advanced DLL Trainers.
+[+] Added new method to get static address.
+[+] Added support for 64bit games to Read/Write address.
+[-] Moved GT_ShowInfo and GT_ShowWarning to Public methods.
+
+
 V 1.0 -> Dated : 23/03/2018
 V 1.1 -> Dated : 11/04/2018
 V 1.2 -> Dated : 23/04/2018
 V 1.3 -> Dated : 12/08/2018
 V 1.4 -> Dated : 28/08/2018
+V 1.5 -> Dated : 17/10/2019
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -146,6 +156,12 @@ typedef enum GT_SHELL {
     GT_PATCHED_SHELL,
 } GT_SHELL;
 
+/*Enum for ASMInject type*/
+typedef enum GT_ASM_TYPE {
+	GT_ORIGINAL_ASM,
+	GT_PATCHED_ASM,
+} GT_ASM_TYPE;
+
 /****************************************************************************/
 /*********************-PUBLIC-METHODS-***************************************/
 /****************************************************************************/
@@ -167,12 +183,14 @@ LPVOID GT_ReadPointerOffsets(LPVOID,DWORD*,SIZE_T);
 BOOL GT_WritePointerOffset(LPVOID,DWORD,LPVOID);
 BOOL GT_WritePointerOffsets(LPVOID,DWORD*,SIZE_T,LPVOID);
 
-/*Public getter methods to get Game Name,Handle,Process ID,base address.*/
+/*Public getter methods to get Game Name,Handle,Process ID,base address,static address.*/
 LPCSTR GT_GetGameName(VOID);
 DWORD GT_GetProcessID(VOID);
 HANDLE GT_GetGameHandle4mHWND(HWND);
 DWORD GT_GetProcessID4mHWND(HWND);
 LPBYTE GT_GetGameBaseAddress(DWORD);
+LPVOID GT_GetStaticAddress(DWORD64,DWORD*,SIZE_T,DWORD);
+
 
 /*Public methods for creating hot-keys*/
 BOOL GT_HotKeysDown(INT, ...);
@@ -197,6 +215,11 @@ BOOL GT_InjectOpcode(LPVOID, LPCVOID, SIZE_T);
 BOOL GT_InjectOpcodes(LPVOID[], LPBYTE[], SIZE_T[], SIZE_T);
 BOOL GT_InjectDLL(LPCSTR,LPCSTR);
 
+#ifdef GT_BUILD_DLL
+BOOL GT_InjectAsm(LPVOID, LPVOID,INT,GT_ASM_TYPE);
+DWORD GT_GetJmpBackAddress(LPVOID, DWORD, LPCSTR);
+#endif
+
 /*Semi-private Tool for writing assembly NOP instruction*/
 BOOL GT_WriteNOP(LPVOID, SIZE_T);
 BOOL GT_WriteNOPs(LPVOID[], SIZE_T[], SIZE_T);
@@ -215,13 +238,15 @@ BOOL GT_DisableLogs(VOID);
 HANDLE GT_GetGameHandle(VOID);
 HWND GT_GetGameHWND(VOID);
 
+/*Semi-private methods for showing info/warning*/
+VOID GT_ShowInfo(LPCSTR);
+VOID GT_ShowWarning(LPCSTR);
+
 /****************************************************************************/
 /****************-PRIVATE-METHODS-*******************************************/
 /****************************************************************************/
-/*Private methods for showing error/info/warning*/
+/*Private methods for showing error*/
 static VOID GT_ShowError(DWORD, LPCSTR, DWORD);
-static VOID GT_ShowInfo(LPCSTR);
-static VOID GT_ShowWarning(LPCSTR);
 static DWORD GT_GetError(VOID);
 
 /*Private setter methods for setting Game Name, ID,Handle,HWND etc*/
