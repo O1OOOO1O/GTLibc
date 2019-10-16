@@ -12,7 +12,7 @@ and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make
 
 ## **_Your support is needed to keep this project alive, Feel free to donate._**
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/AzimD)
-q
+
 ## Do check our new game-library for Python aswell [GTLibPy](https://github.com/haseeb-heaven/GTLibPy)
 
 # Main Components :
@@ -137,6 +137,7 @@ GTLIBC Version : V 1.1  Dated : 12/04/2018.<br/>
 GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
 GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
 GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
+GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
 **[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
@@ -163,5 +164,12 @@ GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
 **[+]** Added support for reading and writing Float values.<br/>
 **[+]** Improved all read/write methods to adapt generic data types.<br/>
 **[+]** Added new Macros for NULL and NIL.<br/>
+
+**CHANGE LOGS FOR V 1.5** <br/>
+**[+]** Added new **DLL methods** for Injecting **Assembly** code.<br/>
+**[+]** Added new macro _GT_BUILD_DLL_ for Advanced DLL Trainers.<br/>
+**[+]** Added new method to get **Static** address.<br/>
+**[+]** Added support for **64bit** games to _Read/Write_ address.<br/>
+**[-]** Moved _GT_ShowInfo_ and _GT_ShowWarning_ to Public methods.<br/>
 
 Written and maintained by HaseeB Mir (haseebmir.hm@gmail.com)
