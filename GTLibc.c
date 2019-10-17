@@ -633,7 +633,7 @@ LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
         {
             /*GT_INT hard-coded because reading pointer will return address in INT format.*/
             lpdw_address = (PDWORD64)(dw_address + dw_offset);
-            lp_address_value = *(PDWORD)GT_ReadAddress((LPVOID)lpdw_address);
+            lp_address_value = *(PDWORD64)GT_ReadAddress((LPVOID)lpdw_address);
             gt_private_method = TRUE;
 
             if (lp_address_value == NULL)
@@ -695,7 +695,7 @@ LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
 
             for (index = 0; index < sz_offsets / sizeof(DWORD); index++)
             {
-                lpdw_address = (PDWORD)GT_ReadPointerOffset((LPVOID)lpdw_address,dw_offsets[index]);
+                lpdw_address = (PDWORD64)GT_ReadPointerOffset((LPVOID)lpdw_address,dw_offsets[index]);
                 gt_private_method = TRUE;
 
                 if (GT_IsLogEnabled())
