@@ -6,7 +6,7 @@ It uses only **WIN32-API** methods instead of **CRT** method because this is int
 and not shall be portable or to target other OS like **_Linux_,_MAC OS_** etc.
 
 **NOTE** : This ain't memory scanning,hooking,analyzing library, it won't provide methods for scanning/signature or dumping RAW memory.
- 
+
 **AIM** : The aim of this library is only to provide the most efficient way of creating game trainer 
 and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make reading/writing ,finding Game process easier and convenient.
 
@@ -14,6 +14,10 @@ and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/AzimD)
 
 ## Do check our new game-library for Python aswell [GTLibPy](https://github.com/haseeb-heaven/GTLibPy)
+
+# Online Usage licence : 
+THIS LIBRARY IS INTENDED TO USE ONLY FOR **_OFFLINE GAMES_** ONLY AND YOU AGREE NOT TO USE THIS FOR **_ONLINE GAMES_** BY ANY MEANS,AND NOT TO CREATE MODS/CHEATS FOR **ONLINE GAMES.**
+
 
 # Main Components :
 
