@@ -175,5 +175,3 @@ GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
 **[+]** Added new method to get **Static** address.<br/>
 **[+]** Added support for **64bit** games to _Read/Write_ address.<br/>
 **[-]** Moved _GT_ShowInfo_ and _GT_ShowWarning_ to Public methods.<br/>
-
-Written and maintained by HaseeB Mir (haseebmir.hm@gmail.com)
