@@ -126,10 +126,10 @@ or if you want to **disable** logs again you can use **GT_DisableLogs()** method
 
 
 # Trainer Demo :
-As a demo of this library GTA-SA Trainer is included to show demo of all the **GT**Libc and **GT**Console methods and how to use them in making simple game trainer.
+As a demo of this library Assault-Cube Trainer is included to show demo of all the **GT**Libc and **GT**Console methods and how to use them in making simple game trainer.
 
 # GTLibc Tutorial on YouTube :
-[![GTLibc Demo](https://img.youtube.com/vi/cRCnN987gd8/0.jpg)](https://www.youtube.com/watch?v=cRCnN987gd8)
+[![GTLibc Demo](https://img.youtube.com/vi/knJ1l8rhTnw/0.jpg)](https://www.youtube.com/watch?v=knJ1l8rhTnw)
 
 **DOCUMENTATION INFO :**
 All Public and Semi-Private methods are well documented.
@@ -142,6 +142,7 @@ GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
 GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
 GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
 GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
+GTLIBC Version : V 1.6 -> Dated : 04/07/2020<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
 **[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
@@ -175,3 +176,15 @@ GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
 **[+]** Added new method to get **Static** address.<br/>
 **[+]** Added support for **64bit** games to _Read/Write_ address.<br/>
 **[-]** Moved _GT_ShowInfo_ and _GT_ShowWarning_ to Public methods.<br/>
+
+**CHANGE LOGS FOR V 1.6** <br/>
+**[+]** Updated all **Read/Write** methods to take data size manually.<br/>
+**[+]** Added new Wrapper methods for basic Read/Write functionality Like **GT_ReadByte(),GT_Read4Byte(),GT_ReadFloat()** etc.<br/>
+**[+]** Added new method **GT_GetProcessModule()** to get all modules of process and to use it enable _GT_USE_PROC_MODULES_ macro.<br/>
+**[-]** Removed Automatic data size detection due to **high error rate**.<br/>
+**[+]** Added new method to Resume and Suspend Process/Threads  - **GT_SuspendResumeProcess()**<br/>
+**[+]** Added new method to detect Game architecture - **GT_Is64bitGame()**<br/>
+**[+]** Added Automatic Game and Trainers architecture compatibility - 32Bit trainer can't access 64bit games.<br/>
+**[+]** Added new Method to Read/Write single Pointer from address. **GT_ReadPointer()** and **GT_WritePointer()**<br/>
+**[+]** Fixed some more errors and cleaned up the code.<br/>
+

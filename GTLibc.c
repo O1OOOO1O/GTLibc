@@ -5,7 +5,7 @@
 /*Global variables for storing game information*/
 DWORD gt_process_id = GT_NIL;
 HANDLE gt_game_handle = (HANDLE)GT_NULL;
-CHAR gt_game_name[MAX_PATH] = { GT_NUL };
+CHAR gt_game_name[MAX_PATH] = {GT_NUL};
 HWND gt_game_hwnd = (HWND)GT_NULL;
 
 /*Global variable for storing error code*/
@@ -40,7 +40,7 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
     LPSTR game_name_exe = GT_NULL, game_exe = GT_NULL;
 
     /*process info variables.*/
-    CHAR p_name[MAX_PATH] = { '\0' };
+    CHAR p_name[MAX_PATH] = {'\0'};
     DWORD p_id = GT_NIL;
     HANDLE p_handle = (HANDLE)GT_NULL;
     HWND p_hwnd = (HWND)GT_NULL;
@@ -50,21 +50,6 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
     PROCESSENTRY32 entry;
     HANDLE snapshot = GT_NULL;
     BOOL game_found = FALSE;
-
-    if (GT_IsLogEnabled())
-    {
-        /*Get Architecture type.*/
-        char* arch_type;
-
-#if defined(BUILD_ARCH_32)
-        arch_type = "ARCH_32";
-#elif defined(BUILD_ARCH_64)
-        arch_type = "ARCH_64";
-#endif
-
-        GT_AddLog("%s -> game name input : %s  Architecture : %s\n", FUNC_NAME, game_name, arch_type);
-        gt_private_method = TRUE;
-    }
 
     gt_try
     {
@@ -99,7 +84,7 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                     gt_private_method = TRUE;
 
                     /*copy exe file name.*/
-                    lstrcpy(sz_exe_file,(LPCSTR)entry.szExeFile);
+                    lstrcpy(sz_exe_file, (LPCSTR)entry.szExeFile);
 
                     /*remove '.exe' part from game name.*/
                     for (index = 0; index < lstrlen(sz_exe_file); index++)
@@ -127,6 +112,18 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                 p_id = entry.th32ProcessID;
                 p_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 
+                /*Check game trainer architecture compatibility.*/
+                GT_CheckGameTrainerArch(p_handle);
+                gt_private_method = TRUE;
+
+                if (GT_IsLogEnabled())
+                {
+                    BOOL is64bit = GT_Is64bitGame(p_handle);
+                    gt_private_method = TRUE;
+                    GT_AddLog("%s -> game name input : %s  Architecture : %s\n", FUNC_NAME, game_name, (is64bit) ? "ARCH_64" : "ARCH_32");
+                }
+                gt_private_method = TRUE;
+
                 /*set current process info.*/
                 GT_SetGameName(p_name);
                 GT_SetProcessID(p_id);
@@ -136,10 +133,9 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                 p_hwnd = GT_GetGameHWND();
                 gt_private_method = TRUE;
 
-
                 if (GT_IsLogEnabled())
                 {
-                    GT_AddLog("Game \tname %s\tpid : %u\tHandle : %p\thwnd : %p\n", p_name, p_id, p_handle, p_hwnd);
+                    GT_AddLog("Game %s\tpid : %u\tHandle : %p\thwnd : %p\n", p_name, p_id, p_handle, p_hwnd);
                     gt_private_method = TRUE;
                 }
 
@@ -152,7 +148,7 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                 CloseHandle(snapshot);
                 CloseHandle(gt_game_handle);
 
-                GT_ShowError(ERROR_FILE_NOT_FOUND, FUNC_NAME, LINE_NO);
+                GT_ThrowError(ERROR_FILE_NOT_FOUND, FUNC_NAME, LINE_NO);
                 gt_private_method = TRUE;
             }
         }
@@ -167,7 +163,7 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -198,7 +194,6 @@ HWND GT_FindGameWindow(LPCSTR window_name)
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         game_window = FindWindowEx((HWND)GT_NULL, (HWND)GT_NULL, GT_NUL, window_name);
@@ -210,7 +205,7 @@ HWND GT_FindGameWindow(LPCSTR window_name)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -224,28 +219,22 @@ HWND GT_FindGameWindow(LPCSTR window_name)
 
 /**
  * @description - Read value from provided address.
- * @param - Address in VOID* format.
+ * @param - Address in VOID* format and size of value.
  * @return - If read succeeded then it returns LPVOID object otherwise returns GT_NIL.
  */
 
-LPVOID GT_ReadAddress(LPVOID address)
+LPVOID GT_ReadAddress(LPVOID address, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     gt_error_code = GT_NIL;
     gt_private_method = TRUE;
 
-    LPVOID lp_value = GT_MemAlloc(HEAP_ZERO_MEMORY, sizeof(LPVOID));
+    LPVOID lp_value = GT_MemAlloc(HEAP_ZERO_MEMORY, lp_size);
     gt_private_method = TRUE;
-
-    SIZE_T lp_size = GT_NIL;
-    CHAR value_str[0xF] = { GT_NUL };
-
-    /*Get value type information.*/
-    GT_GetValueType(lp_value, &lp_size, value_str);
 
     if (GT_IsLogEnabled())
     {
-        GT_AddLog("%s -> trying to read %s value of size %u from address %p\n", FUNC_NAME, value_str, lp_size, address);
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
         gt_private_method = TRUE;
     }
 
@@ -258,7 +247,7 @@ LPVOID GT_ReadAddress(LPVOID address)
 
         else
         {
-            if (!ReadProcessMemory(gt_game_handle,address,lp_value,lp_size,GT_NULL))
+            if (!ReadProcessMemory(gt_game_handle, address, lp_value, lp_size, GT_NULL))
             {
                 gt_error_code = GT_GetError();
                 /*if Error not set by ReadProcessMemory.*/
@@ -273,13 +262,13 @@ LPVOID GT_ReadAddress(LPVOID address)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
     if (GT_IsLogEnabled())
     {
-        GT_AddLog("%s -> returned value type : %s\n", FUNC_NAME, value_str);
+        GT_AddLog("%s -> returned value pointer : %p \n", FUNC_NAME, lp_value);
     }
 
     gt_private_method = FALSE;
@@ -292,24 +281,18 @@ LPVOID GT_ReadAddress(LPVOID address)
  * @return - If write is succeeded then it returns TRUE otherwise returns FALSE
  */
 
-BOOL GT_WriteAddress(LPVOID address, LPVOID lp_value)
+BOOL GT_WriteAddress(LPVOID address, LPVOID lp_value, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     BOOL write_status = FALSE;
-    SIZE_T lp_size = GT_NIL;
-    CHAR value_str[0xF] = { GT_NUL };
     gt_error_code = GT_NIL;
     gt_private_method = TRUE;
 
-    /*Get value type information.*/
-    GT_GetValueType(lp_value, &lp_size, value_str);
-
     if (GT_IsLogEnabled())
     {
-        GT_AddLog("%s -> Trying to write %s type value of size : %u at address %p\n", FUNC_NAME, value_str, lp_size, lp_value, address);
+        GT_AddLog("%s -> Trying to write value of size : %u at address %p\n", FUNC_NAME, lp_size, lp_value, address);
         gt_private_method = TRUE;
     }
-
 
     gt_try
     {
@@ -320,7 +303,7 @@ BOOL GT_WriteAddress(LPVOID address, LPVOID lp_value)
 
         else
         {
-            if (!(write_status = WriteProcessMemory(gt_game_handle,address,lp_value,lp_size, GT_NULL)))
+            if (!(write_status = WriteProcessMemory(gt_game_handle, address, lp_value, lp_size, GT_NULL)))
             {
                 gt_error_code = GT_GetError();
 
@@ -332,12 +315,11 @@ BOOL GT_WriteAddress(LPVOID address, LPVOID lp_value)
                 }
                 gt_throw(gt_error_code);
             }
-
         }
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -350,14 +332,13 @@ BOOL GT_WriteAddress(LPVOID address, LPVOID lp_value)
     return write_status;
 }
 
-
 /**
  * @description - Read value from provided address with offset.
  * @param - Address in VOID* format and offset in DWORD format.
  * @return - If read succeeded then it returns address of pointer otherwise returns GT_NIL.
  */
 
-LPVOID GT_ReadAddressOffset(LPVOID lp_address, DWORD dw_offset)
+LPVOID GT_ReadAddressOffset(LPVOID lp_address, DWORD dw_offset, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     LPVOID lp_value = GT_NIL;
@@ -373,7 +354,6 @@ LPVOID GT_ReadAddressOffset(LPVOID lp_address, DWORD dw_offset)
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (gt_game_handle == GT_NIL)
@@ -384,13 +364,13 @@ LPVOID GT_ReadAddressOffset(LPVOID lp_address, DWORD dw_offset)
         else
         {
             lpdw_address = (PDWORD64)(dw_address + dw_offset);
-            lp_value = GT_ReadAddress((LPVOID)lpdw_address);
+            lp_value = GT_ReadAddress((LPVOID)lpdw_address, lp_size);
             gt_private_method = TRUE;
         }
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -409,7 +389,7 @@ LPVOID GT_ReadAddressOffset(LPVOID lp_address, DWORD dw_offset)
  * @return - If write succeeded then it returns TRUE otherwise returns FALSE.
  */
 
-BOOL GT_WriteAddressOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
+BOOL GT_WriteAddressOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     BOOL write_status = FALSE;
@@ -435,7 +415,7 @@ BOOL GT_WriteAddressOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
         else
         {
             lpdw_address = (PDWORD64)(dw_address + dw_offset);
-            write_status = GT_WriteAddress((LPVOID)lpdw_address,value);
+            write_status = GT_WriteAddress((LPVOID)lpdw_address, value, lp_size);
             gt_private_method = TRUE;
 
             if (!write_status)
@@ -447,7 +427,7 @@ BOOL GT_WriteAddressOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -462,17 +442,17 @@ BOOL GT_WriteAddressOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
 
 /**
  * @description - Read value from provided address with provided offsets.
- * @param - Address in VOID* format, offsets in DWORD* format and size of offsets.
+ * @param - Address in VOID* format, offsets in DWORD* format and size of offsets and size of each element.
  * @return - If read succeeded then it returns list of values otherwise returns GT_NULL
  * NOTE : This will be useful in reading multiple values at a time like multiple Ammos/Clips from Ammos/Clips offsets list.
  * PS : FREE this memory after using it to avoid memory leaks use HeapFree() Method from (windows.h).
  */
 
-LPVOID GT_ReadAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offsets)
+LPVOID GT_ReadAddressOffsets(LPVOID lp_address, DWORD *dw_offsets, SIZE_T sz_offsets, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     UINT index = GT_NIL;
-    LPVOID* lp_values = GT_NULL;
+    LPVOID *lp_values = GT_NULL;
     gt_private_method = TRUE;
     gt_error_code = GT_NIL;
 
@@ -506,7 +486,7 @@ LPVOID GT_ReadAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
         {
             for (index = 0; index < sz_offsets / sizeof(DWORD); index++)
             {
-                lp_values[index] = GT_ReadAddressOffset(lp_address,dw_offsets[index]);
+                lp_values[index] = GT_ReadAddressOffset(lp_address, dw_offsets[index], lp_size);
                 gt_private_method = TRUE;
 
                 if (GT_IsLogEnabled())
@@ -519,7 +499,7 @@ LPVOID GT_ReadAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -540,7 +520,7 @@ LPVOID GT_ReadAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
   * NOTE : This will be useful in writing multiple values at a time like multiple ammo/clips values at Ammos/Clips offsets list.
  */
 
-BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offsets, LPVOID value)
+BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD *dw_offsets, SIZE_T sz_offsets, LPVOID value, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     UINT index = GT_NIL;
@@ -554,7 +534,6 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (gt_game_handle == GT_NIL)
@@ -567,7 +546,7 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
 
             for (index = 0; index < sz_offsets / sizeof(DWORD); index++, dw_offsets++)
             {
-                write_status = GT_WriteAddressOffset(lp_address,*dw_offsets,value);
+                write_status = GT_WriteAddressOffset(lp_address, *dw_offsets, value, lp_size);
                 gt_private_method = TRUE;
 
                 if (GT_IsLogEnabled())
@@ -575,7 +554,6 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
                     GT_AddLog("Offsets[%u] : %p\t with write status %d\n", index, dw_offsets[index], write_status);
                     gt_private_method = TRUE;
                 }
-
 
                 if (!write_status)
                 {
@@ -586,7 +564,7 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -599,6 +577,23 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
     return write_status;
 }
 
+/**
+ * @description - Read pointer's address from provided address.
+ * @param - Address in VOID* format and offset in DWORD format and size of pointer.
+ * @return - If read succeeded then it returns address of pointer otherwise returns GT_NULL.
+ */
+
+LPVOID GT_ReadPointer(LPVOID lp_address, SIZE_T lp_size)
+{
+    gt_private_method = TRUE;
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s  ->  Trying to read pointer from address %p\n", FUNC_NAME, lp_address);
+        gt_private_method = TRUE;
+    }
+
+    return GT_ReadPointerOffset(lp_address, GT_NIL, lp_size);
+}
 
 /**
  * @description - Read pointer's address from provided address with offset.
@@ -606,7 +601,7 @@ BOOL GT_WriteAddressOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
  * @return - If read succeeded then it returns address of pointer otherwise returns GT_NULL.
  */
 
-LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
+LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     LPVOID lp_address_value = GT_NULL;
@@ -621,7 +616,6 @@ LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (gt_game_handle == GT_NIL)
@@ -633,7 +627,7 @@ LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
         {
             /*GT_INT hard-coded because reading pointer will return address in INT format.*/
             lpdw_address = (PDWORD64)(dw_address + dw_offset);
-            lp_address_value = *(PDWORD64)GT_ReadAddress((LPVOID)lpdw_address);
+            lp_address_value = *(PDWORD64)GT_ReadAddress((LPVOID)lpdw_address, lp_size);
             gt_private_method = TRUE;
 
             if (lp_address_value == NULL)
@@ -644,7 +638,7 @@ LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -657,14 +651,13 @@ LPVOID GT_ReadPointerOffset(LPVOID lp_address, DWORD dw_offset)
     return lp_address_value;
 }
 
-
 /**
  * @description - Read pointer's address from provided address with provided offsets.
  * @param - Address in VOID* format, offsets in DWORD* format and size of offsets.
  * @return - If read succeeded then it returns address of pointer otherwise returns GT_NULL.
  */
 
-LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offsets)
+LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD *dw_offsets, SIZE_T sz_offsets, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_NULL;
     UINT index = GT_NIL;
@@ -677,7 +670,6 @@ LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
         GT_AddLog("%s  ->  Trying to read pointer from address %p with offsets\n", FUNC_NAME, lp_address);
         gt_private_method = TRUE;
     }
-
 
     gt_try
     {
@@ -695,7 +687,7 @@ LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
 
             for (index = 0; index < sz_offsets / sizeof(DWORD); index++)
             {
-                lpdw_address = (PDWORD64)GT_ReadPointerOffset((LPVOID)lpdw_address,dw_offsets[index]);
+                lpdw_address = (PDWORD64)GT_ReadPointerOffset((LPVOID)lpdw_address, dw_offsets[index], lp_size);
                 gt_private_method = TRUE;
 
                 if (GT_IsLogEnabled())
@@ -713,7 +705,7 @@ LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -727,11 +719,30 @@ LPVOID GT_ReadPointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_off
 
 /**
  * @description - Write value at pointer's address with offset.
+ * @param - Address in VOID* format and offset in DWORD format,Pointer to value and size of value.
+ * @return - If write succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_WritePointer(LPVOID lp_address, LPVOID value, SIZE_T lp_size)
+{
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s  ->  Trying to write value %u at pointer %p\n", FUNC_NAME, value, lp_address);
+        gt_private_method = TRUE;
+    }
+
+    return GT_WritePointerOffset(lp_address, GT_NIL, value, lp_size);
+}
+
+/**
+ * @description - Write value at pointer's address with offset.
  * @param - Address in VOID* format and offset in DWORD format,Pointer to value.
  * @return - If write succeeded then it returns TRUE otherwise returns FALSE.
  */
 
-BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
+BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     DWORD dw_base_address_value = GT_NIL, dw_real_address = GT_NIL;
@@ -745,7 +756,6 @@ BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (gt_game_handle == GT_NIL)
@@ -754,7 +764,7 @@ BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
         }
 
         /*GT_INT hard-coded because reading pointer will return address in INT format.*/
-        dw_base_address_value = *(PDWORD)GT_ReadAddress(lp_address);
+        dw_base_address_value = *(PDWORD)GT_ReadAddress(lp_address, lp_size);
         gt_private_method = TRUE;
 
         if (dw_base_address_value == GT_NIL)
@@ -765,7 +775,7 @@ BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
         else
         {
             dw_real_address = dw_base_address_value + dw_offset;
-            write_status = GT_WriteAddress((LPVOID)dw_real_address,value);
+            write_status = GT_WriteAddress((LPVOID)dw_real_address, value, lp_size);
             gt_private_method = TRUE;
 
             if (!write_status)
@@ -776,7 +786,7 @@ BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -796,7 +806,7 @@ BOOL GT_WritePointerOffset(LPVOID lp_address, DWORD dw_offset, LPVOID value)
  * @return - If write succeeded then it returns TRUE otherwise returns FALSE.
  */
 
-BOOL GT_WritePointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offsets, LPVOID value)
+BOOL GT_WritePointerOffsets(LPVOID lp_address, DWORD *dw_offsets, SIZE_T sz_offsets, LPVOID value, SIZE_T lp_size)
 {
     HANDLE gt_game_handle = GT_GetGameHandle();
     UINT index = GT_NIL;
@@ -810,7 +820,6 @@ BOOL GT_WritePointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (gt_game_handle == GT_NIL)
@@ -822,7 +831,7 @@ BOOL GT_WritePointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
 
             for (index = 0; index < sz_offsets / sizeof(DWORD); index++, dw_offsets++)
             {
-                write_status = GT_WritePointerOffset(lp_address,*dw_offsets,value);
+                write_status = GT_WritePointerOffset(lp_address, *dw_offsets, value, lp_size);
                 gt_private_method = TRUE;
 
                 if (GT_IsLogEnabled())
@@ -840,7 +849,7 @@ BOOL GT_WritePointerOffsets(LPVOID lp_address, DWORD* dw_offsets, SIZE_T sz_offs
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -867,7 +876,6 @@ LPCSTR GT_GetGameName()
     {
         g_name = gt_game_name;
     }
-
 
     else
     {
@@ -932,7 +940,6 @@ HANDLE GT_GetGameHandle4mHWND(HWND g_hwnd)
         gt_private_method = TRUE;
     }
 
-
     gt_try
     {
         if (g_hwnd == GT_NULL || g_hwnd == INVALID_HANDLE_VALUE)
@@ -967,7 +974,7 @@ HANDLE GT_GetGameHandle4mHWND(HWND g_hwnd)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1004,7 +1011,6 @@ DWORD GT_GetProcessID4mHWND(HWND g_hwnd)
         if (g_hwnd == GT_NULL || g_hwnd == INVALID_HANDLE_VALUE)
         {
             gt_throw(GT_GetError());
-
         }
 
         else
@@ -1012,7 +1018,7 @@ DWORD GT_GetProcessID4mHWND(HWND g_hwnd)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1031,7 +1037,7 @@ DWORD GT_GetProcessID4mHWND(HWND g_hwnd)
  * @return - On success it returns base address of game in (LPBYTE) format otherwise returns GT_NUL.
  */
 
-LPBYTE GT_GetGameBaseAddress(DWORD gt_process_id)
+LPVOID GT_GetGameBaseAddress(DWORD gt_process_id)
 {
     gt_private_method = TRUE;
     SetLastError(NO_ERROR);
@@ -1047,7 +1053,6 @@ LPBYTE GT_GetGameBaseAddress(DWORD gt_process_id)
         GT_AddLog("%s  ->  input process id :  %u\n", FUNC_NAME, gt_process_id);
         gt_private_method = TRUE;
     }
-
 
     gt_try
     {
@@ -1074,7 +1079,7 @@ LPBYTE GT_GetGameBaseAddress(DWORD gt_process_id)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1084,7 +1089,7 @@ LPBYTE GT_GetGameBaseAddress(DWORD gt_process_id)
     }
 
     gt_private_method = FALSE;
-    return base_address;
+    return (LPVOID)base_address;
 }
 
 /**
@@ -1094,14 +1099,13 @@ LPBYTE GT_GetGameBaseAddress(DWORD gt_process_id)
  * NOTE : Static pointer may look like this --> "GAME.exe"+0x0016E210 : "0x0016E210" is static pointer.
  */
 
-
-LPVOID GT_GetStaticAddress(DWORD64 static_offset, DWORD* offsets,SIZE_T sz_offsets,DWORD end_offset)
+LPVOID GT_GetStaticAddress(DWORD64 static_offset, DWORD *offsets, SIZE_T sz_offsets, DWORD end_offset, SIZE_T lp_size)
 {
     gt_private_method = TRUE;
-    LPVOID base_address = GT_NULL,base_pointer = GT_NULL,static_address = GT_NULL;
+    LPVOID base_address = GT_NULL, base_pointer = GT_NULL, static_address = GT_NULL;
     if (GT_IsLogEnabled())
     {
-        GT_AddLog("%s  -> static offset : %p with %d offsets and end offset : 0x%X\n", FUNC_NAME, static_offset,sz_offsets/sizeof(DWORD),end_offset);
+        GT_AddLog("%s  -> static offset : %p with %d offsets and end offset : 0x%X\n", FUNC_NAME, static_offset, sz_offsets / sizeof(DWORD), end_offset);
         gt_private_method = TRUE;
     }
 
@@ -1109,13 +1113,13 @@ LPVOID GT_GetStaticAddress(DWORD64 static_offset, DWORD* offsets,SIZE_T sz_offse
     {
         UINT pid = GT_GetProcessID();
         base_address = GT_GetGameBaseAddress(pid);
-        base_pointer = GT_ReadPointerOffset(base_address,static_offset);
-        static_address = GT_ReadPointerOffsets(base_pointer, offsets, sz_offsets) + end_offset;
+        base_pointer = GT_ReadPointerOffset(base_address, static_offset, lp_size);
+        static_address = GT_ReadPointerOffsets(base_pointer, offsets, sz_offsets, lp_size) + end_offset;
         gt_private_method = TRUE;
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
     if (GT_IsLogEnabled())
@@ -1126,6 +1130,652 @@ LPVOID GT_GetStaticAddress(DWORD64 static_offset, DWORD* offsets,SIZE_T sz_offse
     gt_private_method = FALSE;
 
     return static_address;
+}
+
+/**
+ * @description - Read single byte value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns byte value otherwise returns GT_NUL.
+ */
+
+BYTE GT_ReadByte(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BYTE lp_value = GT_NUL;
+    //Set the integer size.
+    SIZE_T lp_size = sizeof(BYTE);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PBYTE)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %d \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write byte value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_WriteByte(LPVOID address, BYTE value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set the integer size and value.
+    SIZE_T lp_size = sizeof(BYTE);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u to address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read 2 bytes value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns value otherwise returns GT_NUL.
+ */
+
+UINT16 GT_Read2Bytes(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    UINT16 lp_value = GT_NUL;
+    //Set the value size.
+    SIZE_T lp_size = sizeof(UINT16);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PUINT16)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %d \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write 2 bytes value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_Write2Bytes(LPVOID address, UINT16 value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = sizeof(INT16);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u to address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read 4 integer(4Bytes) value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns value otherwise returns GT_NIL.
+ */
+
+UINT32 GT_Read4Bytes(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    INT32 lp_value = GT_NIL;
+    //Set the value size.
+    SIZE_T lp_size = sizeof(UINT32);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PUINT32)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %d \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write integer(4Bytes) value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_Write4Bytes(LPVOID address, UINT32 value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = sizeof(UINT32);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read 8 integer(8Bytes) value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns value otherwise returns GT_NIL.
+ */
+
+UINT64 GT_Read8Bytes(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    UINT64 lp_value = GT_NIL;
+    //Set the value size.
+    SIZE_T lp_size = sizeof(UINT64);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PINT64)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %d \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write integer(8Bytes) value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_Write8Bytes(LPVOID address, UINT64 value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = sizeof(UINT64);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read float value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns value otherwise returns GT_NIL.
+ */
+
+FLOAT GT_ReadFloat(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    FLOAT lp_value = GT_NULLF;
+    //Set the value size.
+    SIZE_T lp_size = sizeof(FLOAT);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PFLOAT)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %f \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write Float value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_WriteFloat(LPVOID address, FLOAT value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = sizeof(FLOAT);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read double value from provided address.
+ * @param - Address in VOID* format.
+ * @return - If read succeeded then returns value otherwise returns GT_NIL.
+ */
+
+DOUBLE GT_ReadDouble(LPVOID address)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    DOUBLE lp_value = GT_NULLF;
+    //Set the value size.
+    SIZE_T lp_size = sizeof(DOUBLE);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = *(PDOUBLE)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %f \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write Double value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_WriteDouble(LPVOID address, DOUBLE value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = sizeof(DOUBLE);
+    LPVOID lp_value = &value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * @description - Read string value from provided address.
+ * @param - Address in VOID* format and length of string.
+ * @return - If read succeeded then returns value otherwise returns GT_NIL.
+ */
+
+PCHAR GT_ReadString(LPVOID address, SIZE_T lp_size)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    PCHAR lp_value = GT_NIL;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to read value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    lp_value = (PCHAR)GT_ReadAddress(address, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned value : %s \n", FUNC_NAME, lp_value);
+
+    gt_private_method = FALSE;
+    return lp_value;
+}
+
+/**
+ * @description - Write string value to provided address.
+ * @param - Address in VOID* format and value.
+* @return - If write is succeeded then it returns TRUE otherwise returns FALSE.
+ */
+
+BOOL GT_WriteString(LPVOID address, PCHAR value)
+{
+    gt_error_code = GT_NIL;
+    gt_private_method = TRUE;
+    BOOL write_status = FALSE;
+
+    //Set size and value.
+    SIZE_T lp_size = lstrlen(value);
+    LPVOID lp_value = (PCHAR)value;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        gt_private_method = TRUE;
+    }
+
+    write_status = GT_WriteAddress(address, lp_value, lp_size);
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned status : %s \n", FUNC_NAME, GT_BoolAlpha(write_status));
+
+    gt_private_method = FALSE;
+    return write_status;
+}
+
+/**
+ * INFO : Get info module(s) of current process.
+ * @description - Get (FullPath and Address) of single or list of modules of your current process(Game).
+ * @param - Name of module to get single result or provide NULL or empty string to get List of results.
+ * NOTE : Process modules are modules attached to your process externally like "USER32.dll","Kernel32.dll","Ntdll.dll" etc.
+ * To use it Enable GT_USE_PROC_MODULES Macro and compile it with '-lpsapi' or add the flag in compiler option.
+ */
+
+#ifdef GT_USE_PROC_MODULES
+LPSTR GT_GetProcessModule(LPSTR module_name)
+{
+    HMODULE module_handles[1024];
+    HANDLE game_handle = GT_GetGameHandle();
+    LPSTR modules_list = GT_NULL;
+    DWORD n_modules;
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> trying to get modules for process %s\n", FUNC_NAME, module_name);
+        gt_private_method = TRUE;
+    }
+
+    // Get a list of all the modules in this process.
+    if (EnumProcessModules(game_handle, module_handles, sizeof(module_handles), &n_modules))
+    {
+        size_t module_size = 150;
+        if (lstrlen(module_name) == 0)
+            module_size = n_modules * 150;
+
+        modules_list = (LPSTR)GT_MemAlloc(HEAP_ZERO_MEMORY, module_size);
+        gt_private_method = TRUE;
+
+        for (int i = 0; i < (n_modules / sizeof(HMODULE)); i++)
+        {
+            char module_path[MAX_PATH];
+
+            if (GetModuleFileNameEx(game_handle, module_handles[i], module_path, sizeof(module_path) / sizeof(char)))
+            {
+                if (lstrlen(module_name) > 1)
+                {
+                    if (strstr(module_path, module_name) != GT_NULL)
+                    {
+                        FillMemory(modules_list, module_size, GT_NULL);
+                        sprintf(modules_list + lstrlen(modules_list), "\t%s (0x%08X)\n", module_name, module_handles[i]);
+                        return modules_list;
+                    }
+                }
+
+                else if (lstrlen(module_name) == 0)
+                    sprintf(modules_list + lstrlen(modules_list), "\t%s (0x%08X)\n", module_path, module_handles[i]);
+            }
+        }
+    }
+
+    if (GT_IsLogEnabled())
+        GT_AddLog("%s -> returned : %s \n", FUNC_NAME, modules_list);
+
+    gt_private_method = FALSE;
+
+    CloseHandle(game_handle);
+    return modules_list;
+}
+#endif // GT_USE_PROC_MODULES
+
+/**
+ * @description - Suspend or resume any process.
+ * @param - pid - Process id of process.
+ * process_action - Action (Suspend or Resume) Use 'GT_PROC_ACTION' enum to provide values.
+ */
+
+void GT_SuspendResumeProcess(DWORD pid, GT_PROC_ACTION process_action)
+{
+    THREADENTRY32 te32;
+    DWORD tid = GT_NIL;
+    HANDLE process_handle = GT_NULL, h_thread_snap = GT_NULL, h_thread = GT_NULL, remote_thread = GT_NULL;
+
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> Trying to %s process with pid : %d\n", FUNC_NAME, (process_action == GT_PROC_RESUME) ? "Resume" : "Suspend", pid);
+        gt_private_method = TRUE;
+    }
+
+    gt_try
+    {
+        gt_private_method = TRUE;
+        process_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+
+        if (process_handle == GT_NULL)
+        {
+            gt_throw(GT_GetError());
+        }
+
+        /* Takes a snapshot of all threads in the system.*/
+        h_thread_snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GT_NIL);
+
+        if (h_thread_snap == INVALID_HANDLE_VALUE)
+        {
+            gt_throw(GT_GetError());
+        }
+        else
+        {
+            if (GT_IsLogEnabled())
+            {
+                GT_AddLog("%s -> CreateToolhelp32Snapshot success\n", FUNC_NAME);
+                gt_private_method = TRUE;
+            }
+        }
+
+        /*Get information about the thread in a system snapshot.*/
+        te32.dwSize = sizeof(THREADENTRY32);
+        if (Thread32First(h_thread_snap, &te32) == FALSE)
+        {
+            gt_throw(GT_GetError());
+        }
+        else
+        {
+            if (GT_IsLogEnabled())
+            {
+                GT_AddLog("%s -> Thread32First success\n", FUNC_NAME);
+                gt_private_method = TRUE;
+            }
+        }
+
+        /*Display info about each thread.*/
+        do
+        {
+            if (te32.th32OwnerProcessID == pid)
+            {
+                if (tid == 0)
+                    tid = te32.th32ThreadID;
+                h_thread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
+                if (h_thread == GT_NULL)
+                {
+                    gt_throw(GT_GetError());
+                }
+                else
+                {
+                    if ((process_action == GT_PROC_RESUME))
+                    {
+                        int suspend_count = 0;
+                        do
+                        {
+                            suspend_count = ResumeThread(h_thread);
+                        } while (suspend_count > 0);
+                        CloseHandle(h_thread);
+                    }
+
+                    else
+                    {
+                        SuspendThread(h_thread);
+                        CloseHandle(h_thread);
+                    }
+
+                    if (GT_IsLogEnabled())
+                    {
+                        GT_AddLog("%s -> %s thread : %p\n", FUNC_NAME, (process_action == GT_PROC_RESUME) ? "Resume" : "Suspend", te32.th32ThreadID);
+                        gt_private_method = TRUE;
+                    }
+                }
+            }
+        } while (Thread32Next(h_thread_snap, &te32));
+        CloseHandle(h_thread_snap);
+    }
+    gt_catch(gt_error_code)
+    {
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
+        gt_private_method = TRUE;
+    }
+    gt_private_method = FALSE;
+    CloseHandle(process_handle);
+}
+
+/**
+ * @description  - Check whether Game running is 32bit or 64bit.
+ * @param - pid - Process id of process.
+ * @return - returns TRUE if game is 64bit otherwise returns FALSE.
+ */
+
+BOOL GT_Is64bitGame(HANDLE p_handle)
+{
+    BOOL is64bit = FALSE;
+    gt_private_method = TRUE;
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> Trying to check process  : %p\n", FUNC_NAME, p_handle);
+        gt_private_method = TRUE;
+    }
+
+    /*IsWow - Is Process running on x86 emulator on 64bit machine*/
+    is64bit = !IsWow64(p_handle);
+
+    if (GT_IsLogEnabled())
+    {
+        GT_AddLog("%s -> returned : %s \n", FUNC_NAME, GT_BoolAlpha(is64bit));
+    }
+
+    gt_private_method = FALSE;
+    return is64bit;
+}
+
+/**
+ * @description  - Set game focus to MainWindow - If game is in background.
+ */
+
+void SetGameFocus()
+{
+    HWND gHwnd = GT_GetGameHWND();
+    SetForegroundWindow(gHwnd);
 }
 
 /**
@@ -1225,7 +1875,7 @@ VOID GT_SetCheatCode(LPCSTR cheat_code)
     {
         if (GT_IsLogEnabled())
         {
-            GT_AddLog("%s  ->  input cheat : %s\n",FUNC_NAME,cheat_code);
+            GT_AddLog("%s  ->  input cheat : %s\n", FUNC_NAME, cheat_code);
             gt_private_method = TRUE;
         }
 
@@ -1257,7 +1907,7 @@ VOID GT_SetCheatCode(LPCSTR cheat_code)
     gt_catch(gt_error_code)
     {
         gt_private_method = TRUE;
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
     }
 
     gt_private_method = FALSE;
@@ -1271,7 +1921,7 @@ VOID GT_SetCheatCode(LPCSTR cheat_code)
  * NOTE : FREE this memory after using it to avoid memory leaks use HeapFree() Method.
  */
 
-LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit, CONST size_t offset_size, DWORD search)
+LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit, CONST size_t offset_size, DWORD search, SIZE_T lp_size)
 {
     gt_private_method = TRUE;
     INT value = 0, offset_index = 0, offset = 0, offset_len = (offset_limit / offset_size);
@@ -1286,7 +1936,6 @@ LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit,
         gt_private_method = TRUE;
     }
 
-
     DWORD dw_search_size = search_list_len * sizeof(CHAR);
     LPSTR search_list = (LPSTR)GT_MemAlloc(HEAP_ZERO_MEMORY, dw_search_size);
     gt_private_method = TRUE;
@@ -1300,7 +1949,7 @@ LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit,
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1317,9 +1966,8 @@ LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit,
     {
         offset_address += offset_size;
         offset = (INT)(offset_address - offset_base);
-        value = *(PDWORD)GT_ReadAddress((LPVOID)offset_address);
+        value = *(PDWORD)GT_ReadAddress((LPVOID)offset_address, lp_size);
         gt_private_method = TRUE;
-
 
         /*if value found then copy its offset address etc in formatted string.*/
         if (value == search)
@@ -1334,7 +1982,6 @@ LPSTR GT_SearchOffsetArea(LPVOID offset_base_address, CONST size_t offset_limit,
     gt_private_method = FALSE;
     return search_list;
 }
-
 
 /**
  * INFO : Inject your custom opcode into the game.
@@ -1384,7 +2031,7 @@ BOOL GT_InjectOpcode(LPVOID lp_address, LPCVOID lp_opcode, SIZE_T sz_opcode_len)
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1448,12 +2095,12 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
     gt_try
     {
         /*Getting absolute path of DLL and calculating DLL size*/
-        GetFullPathName(dll_name,MAX_PATH,dll_path,GT_NULL);
+        GetFullPathName(dll_name, MAX_PATH, dll_path, GT_NULL);
         dll_size = lstrlen(dll_path) + 1 * sizeof(CHAR);
 
         if (GT_IsLogEnabled())
         {
-            GT_AddLog("%s -> Finding process : %s\tAbsolute Path of DLL : %s\n",FUNC_NAME,process_name,dll_path);
+            GT_AddLog("%s -> Finding process : %s\tAbsolute Path of DLL : %s\n", FUNC_NAME, process_name, dll_path);
             gt_private_method = TRUE;
         }
 
@@ -1471,16 +2118,16 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> Process found with processID : %d\n",FUNC_NAME,GetProcessId(remote_handle));
+                GT_AddLog("%s -> Process found with processID : %d\n", FUNC_NAME, GetProcessId(remote_handle));
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> Allocating memory in the remote process of size : %d\n",FUNC_NAME,dll_size);
+                GT_AddLog("%s -> Allocating memory in the remote process of size : %d\n", FUNC_NAME, dll_size);
                 gt_private_method = TRUE;
             }
         }
 
         /*Allocate memory in the remote process*/
-        remote_vAddress = VirtualAllocEx(remote_handle,GT_NULL,dll_size,MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        remote_vAddress = VirtualAllocEx(remote_handle, GT_NULL, dll_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
         /*Check if allocation failed*/
         if (remote_vAddress == GT_NULL)
@@ -1492,16 +2139,16 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> virtual memory allocated at address : %p\n",FUNC_NAME,remote_vAddress);
+                GT_AddLog("%s -> virtual memory allocated at address : %p\n", FUNC_NAME, remote_vAddress);
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> Trying to inject DLL to remote process\n",FUNC_NAME);
+                GT_AddLog("%s -> Trying to inject DLL to remote process\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
         }
 
         /*Write the DLL to remote process memory*/
-        if (!(inject_status = WriteProcessMemory(remote_handle,remote_vAddress,dll_path,dll_size,GT_NULL)))
+        if (!(inject_status = WriteProcessMemory(remote_handle, remote_vAddress, dll_path, dll_size, GT_NULL)))
         {
             gt_throw(GT_GetError());
         }
@@ -1510,10 +2157,10 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> Inject DLL to remote process success\n",FUNC_NAME);
+                GT_AddLog("%s -> Inject DLL to remote process success\n", FUNC_NAME);
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> Getting handle for kernel32\n",FUNC_NAME);
+                GT_AddLog("%s -> Getting handle for kernel32\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
         }
@@ -1530,10 +2177,10 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> Found kernel32.dll in remote process\n",FUNC_NAME);
+                GT_AddLog("%s -> Found kernel32.dll in remote process\n", FUNC_NAME);
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> Getting loadLibraryA handle\n",FUNC_NAME);
+                GT_AddLog("%s -> Getting loadLibraryA handle\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
         }
@@ -1545,10 +2192,10 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> Unable to find LoadLibrary\n",FUNC_NAME);
+                GT_AddLog("%s -> Unable to find LoadLibrary\n", FUNC_NAME);
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> Trying to find LoadLibraryW\n",FUNC_NAME);
+                GT_AddLog("%s -> Trying to find LoadLibraryW\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
 
@@ -1558,7 +2205,7 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
             {
                 if (GT_IsLogEnabled())
                 {
-                    GT_AddLog("%s -> LoadLibraryW failed as well\n",FUNC_NAME);
+                    GT_AddLog("%s -> LoadLibraryW failed as well\n", FUNC_NAME);
                     gt_private_method = TRUE;
                 }
                 gt_throw(GT_GetError());
@@ -1567,7 +2214,7 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
             {
                 if (GT_IsLogEnabled())
                 {
-                    GT_AddLog("%s -> LoadLibraryW found at : \n",FUNC_NAME,load_library_address);
+                    GT_AddLog("%s -> LoadLibraryW found at : \n", FUNC_NAME, load_library_address);
                     gt_private_method = TRUE;
                 }
             }
@@ -1577,16 +2224,16 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> LoadLibraryA found at : %p\n",FUNC_NAME,load_library_address);
+                GT_AddLog("%s -> LoadLibraryA found at : %p\n", FUNC_NAME, load_library_address);
                 gt_private_method = TRUE;
 
-                GT_AddLog("%s -> starting new thread to execute dll\n",FUNC_NAME);
+                GT_AddLog("%s -> starting new thread to execute dll\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
         }
 
         /*Create thread and execute DLL in the remote process*/
-        HANDLE remote_thread = CreateRemoteThread(remote_handle,GT_NULL,GT_NIL,(LPTHREAD_START_ROUTINE)load_library_address,remote_vAddress,GT_NIL,GT_NULL);
+        HANDLE remote_thread = CreateRemoteThread(remote_handle, GT_NULL, GT_NIL, (LPTHREAD_START_ROUTINE)load_library_address, remote_vAddress, GT_NIL, GT_NULL);
 
         if (remote_thread == GT_NULL)
         {
@@ -1595,10 +2242,10 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
 
         if (GT_IsLogEnabled())
         {
-            GT_AddLog("%s -> started new thread in remote process. tid  %d\n",FUNC_NAME,remote_thread);
+            GT_AddLog("%s -> started new thread in remote process. tid  %d\n", FUNC_NAME, remote_thread);
             gt_private_method = TRUE;
 
-            GT_AddLog("%s -> waiting for thread to execute\n",FUNC_NAME);
+            GT_AddLog("%s -> waiting for thread to execute\n", FUNC_NAME);
             gt_private_method = TRUE;
         }
 
@@ -1607,12 +2254,12 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
         {
             if (GT_IsLogEnabled())
             {
-                GT_AddLog("%s -> Done Waiting!! Closing process handle\n",FUNC_NAME);
+                GT_AddLog("%s -> Done Waiting!! Closing process handle\n", FUNC_NAME);
                 gt_private_method = TRUE;
             }
         }
 
-        if (!VirtualFreeEx(remote_handle, remote_vAddress,GT_NIL,MEM_RELEASE))
+        if (!VirtualFreeEx(remote_handle, remote_vAddress, GT_NIL, MEM_RELEASE))
         {
             gt_throw(GT_GetError());
         }
@@ -1621,7 +2268,7 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
 
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1671,25 +2318,26 @@ BOOL GT_InjectAsm(LPVOID address, LPVOID asm_func, INT asm_len, GT_ASM_TYPE inje
 
             if (inject_type == GT_PATCHED_SHELL)
             {
-                FillMemory(address,asm_len, NOP);
+                FillMemory(address, asm_len, NOP);
 
                 DWORD relative_address = ((DWORD)asm_func - (DWORD)address) - 5;
 
-                *(BYTE*)address = JMP;
-                *(DWORD*)((DWORD)address + 1) = relative_address;
+                *(BYTE *)address = JMP;
+                *(DWORD *)((DWORD)address + 1) = relative_address;
             }
             else if (inject_type == GT_ORIGINAL_SHELL)
             {
-                FillMemory(address,asm_len, NOP);
-                CopyMemory(address,asm_func, asm_len);
+                FillMemory(address, asm_len, NOP);
+                CopyMemory(address, asm_func, asm_len);
             }
 
             DWORD new_protection;
-            VirtualProtect(address,asm_len, old_protection, &new_protection);
+            VirtualProtect(address, asm_len, old_protection, &new_protection);
         }
-    } gt_catch(gt_error_code)
+    }
+    gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1710,7 +2358,7 @@ BOOL GT_InjectAsm(LPVOID address, LPVOID asm_func, INT asm_len, GT_ASM_TYPE inje
  * @return - Returns jump back address on valid input otherwise returns NIL.
  */
 
-DWORD GT_GetJmpBackAddress(LPVOID address, DWORD length,LPCSTR jmp_back_buf)
+DWORD GT_GetJmpBackAddress(LPVOID address, DWORD length, LPCSTR jmp_back_buf)
 {
 
     gt_private_method = TRUE;
@@ -1794,7 +2442,7 @@ BOOL GT_WriteNOP(LPVOID lp_address, SIZE_T sz_opcode_len)
     gt_catch(gt_error_code)
     {
         gt_private_method = TRUE;
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -1872,7 +2520,6 @@ BOOL GT_WriteJmpOrCall(LPVOID lp_source, LPVOID lp_destination, GT_OPCODE opcode
 
     PDWORD_PTR pdw_destination = (PDWORD_PTR)lp_destination;
     DWORD_PTR destination = (DWORD_PTR)pdw_destination;
-
 
     /*get the opcode type.*/
     switch (opcode_type)
@@ -1956,7 +2603,7 @@ BOOL GT_WriteJmpOrCall(LPVOID lp_source, LPVOID lp_destination, GT_OPCODE opcode
     }
     gt_catch(gt_error_code)
     {
-        GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+        GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         gt_private_method = TRUE;
     }
 
@@ -2048,7 +2695,6 @@ LPVOID GT_InjectShellCode(LPVOID lp_address, LPCVOID lp_shell, SIZE_T sz_shell, 
     gt_private_method = FALSE;
     return shell_code_address;
 }
-
 
 /**
  * INFO : Whether library should maintain logs internally (enable this if you want this feature).
@@ -2143,7 +2789,6 @@ HWND GT_GetGameHWND()
         g_hwnd = gt_game_hwnd;
     }
 
-
     else
     {
         g_hwnd = GT_NULL;
@@ -2235,7 +2880,6 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                 }
             }
 
-
             /*Display info about each thread.*/
             do
             {
@@ -2255,15 +2899,13 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 
                         if (GT_IsLogEnabled())
                         {
-                            GT_AddLog("%s -> Suspend thread : %p\n",FUNC_NAME,te32.th32ThreadID);
+                            GT_AddLog("%s -> Suspend thread : %p\n", FUNC_NAME, te32.th32ThreadID);
                             gt_private_method = TRUE;
                         }
                     }
                 }
-            }
-            while (Thread32Next(h_thread_snap, &te32));
+            } while (Thread32Next(h_thread_snap, &te32));
             CloseHandle(h_thread_snap);
-
 
             /*if shell is of type patched.*/
             if (shell_type == GT_PATCHED_SHELL)
@@ -2285,7 +2927,6 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                         gt_private_method = TRUE;
                     }
                 }
-
 
                 /*Get eip/rip & esp/rsp addresses if opcode is CALL.*/
                 if (opcode_type == GT_OP_CALL)
@@ -2315,12 +2956,11 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                         }
                     }
 
-
                     /*Save eip, esp & ebp and Allocate 4 bytes on the top of the stack for the RET if opcode is type CALL*/
 
 #if defined(BUILD_ARCH_32)
                     context.Esp -= sizeof(UINT);
-                    if (!WriteProcessMemory(process_handle, (LPVOID)context.Esp,(LPCVOID)&context.Eip, sizeof(UINT), GT_NULL))
+                    if (!WriteProcessMemory(process_handle, (LPVOID)context.Esp, (LPCVOID)&context.Eip, sizeof(UINT), GT_NULL))
                     {
                         gt_throw(GT_GetError());
                     }
@@ -2336,10 +2976,9 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                         }
                     }
 
-
 #elif defined(BUILD_ARCH_64)
                     context.Rsp -= sizeof(UINT);
-                    if (!WriteProcessMemory(process_handle,(LPVOID)context.Rsp,(LPCVOID)&context.Rip, sizeof(UINT), GT_NULL))
+                    if (!WriteProcessMemory(process_handle, (LPVOID)context.Rsp, (LPCVOID)&context.Rip, sizeof(UINT), GT_NULL))
                     {
                         gt_throw(GT_GetError());
                     }
@@ -2357,7 +2996,6 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 #endif
                     /*Extra space for RET in case of CALL opcode.*/
                     sz_shellcode += 0x1;
-
                 }
 
                 /*If opcode is JMP then Jump back to next instruction right after original instruction.*/
@@ -2369,7 +3007,7 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 
                 if (GT_IsLogEnabled())
                 {
-                    GT_AddLog("%s -> Shellcode %s\n", FUNC_NAME,(PCHAR)lp_shellcode);
+                    GT_AddLog("%s -> Shellcode %s\n", FUNC_NAME, (PCHAR)lp_shellcode);
                     gt_private_method = TRUE;
                 }
 
@@ -2394,7 +3032,7 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                 {
                     if (GT_IsLogEnabled())
                     {
-                        GT_AddLog("\n%s -> Allocating Virtual memory at address : %p with size %d bytes for shellcode\n", FUNC_NAME,shell_code_address,sz_shellcode);
+                        GT_AddLog("\n%s -> Allocating Virtual memory at address : %p with size %d bytes for shellcode\n", FUNC_NAME, shell_code_address, sz_shellcode);
                         gt_private_method = TRUE;
                     }
                 }
@@ -2473,17 +3111,16 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                         }
                     }
                     /*Inject return opcode to current Shellcode.*/
-                    GT_InjectOpcode(((DWORD_PTR)(shell_code_address)) + (sz_shellcode - 0x1),(LPCVOID)(&ret_opcode),sizeof(UCHAR));
+                    GT_InjectOpcode(((DWORD_PTR)(shell_code_address)) + (sz_shellcode - 0x1), (LPCVOID)(&ret_opcode), sizeof(UCHAR));
                     gt_private_method = TRUE;
                 }
             }
-
 
             else if (shell_type == GT_ORIGINAL_SHELL)
             {
                 if (GT_IsLogEnabled())
                 {
-                    GT_AddLog("%s -> Original shellcode : %p\n", FUNC_NAME,lp_shellcode);
+                    GT_AddLog("%s -> Original shellcode : %p\n", FUNC_NAME, lp_shellcode);
                     gt_private_method = TRUE;
                 }
 
@@ -2530,13 +3167,12 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 
                         if (GT_IsLogEnabled())
                         {
-                            GT_AddLog("%s -> Successfully released virtual memory block %p\n", FUNC_NAME,prev_shellcode_address);
+                            GT_AddLog("%s -> Successfully released virtual memory block %p\n", FUNC_NAME, prev_shellcode_address);
                             gt_private_method = TRUE;
                         }
                     }
                 }
             }
-
 
             /*Take snapshot of all threads.*/
             h_thread_snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GT_NIL);
@@ -2591,7 +3227,7 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                     {
                         ResumeThread(h_thread);
                         if (te32.th32ThreadID == tid)
-                            if (WaitForSingleObject(h_thread,1000) == WAIT_OBJECT_0)
+                            if (WaitForSingleObject(h_thread, 1000) == WAIT_OBJECT_0)
                                 CloseHandle(h_thread);
 
                         if (GT_IsLogEnabled())
@@ -2599,11 +3235,9 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
                             GT_AddLog("%s -> Resume thread success\n", FUNC_NAME);
                             gt_private_method = TRUE;
                         }
-
                     }
                 }
-            }
-            while (Thread32Next(h_thread_snap, &te32));
+            } while (Thread32Next(h_thread_snap, &te32));
 
             /*Close handle an free memory.*/
             CloseHandle(h_thread_snap);
@@ -2615,7 +3249,7 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 
         gt_catch(gt_error_code)
         {
-            GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+            GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
             gt_private_method = TRUE;
         }
 
@@ -2639,26 +3273,64 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
         /*Make copy of allocated Shellcode to free later.*/
         if (shell_type == GT_PATCHED_SHELL)
             prev_shellcode_address = shell_code_address;
-
     }
     gt_private_method = FALSE;
     return shell_code_address;
 }
 
-static VOID GT_ShowError(DWORD gt_error_code, LPCSTR gt_func_name, DWORD gt_line_no)
+static BOOL IsWow64(HANDLE pHandle)
+{
+    BOOL bIsWow64 = FALSE;
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+    {
+        typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
+
+        LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+            GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
+
+        if (NULL != fnIsWow64Process)
+        {
+            if (!fnIsWow64Process(pHandle, &bIsWow64))
+            {
+                GT_ThrowError(GT_GetError(), FUNC_NAME, LINE_NO);
+            }
+        }
+    }
+    return bIsWow64;
+}
+
+/*Check game trainer architecture compatibility with each other.*/
+static VOID GT_CheckGameTrainerArch(HANDLE p_handle)
 {
     if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
     {
-        CHAR err_msg_buf[0xFF] = { '\0' };
-        CHAR sys_err_buf[0xFF] = { '\0' };
+        BOOL is64bit = GT_Is64bitGame(p_handle);
+
+        if (is64bit && gt_x86)
+        {
+            GT_ShowError("Game detected 64bit but application trainer is 32 bit\nTry to change compiler build for 64bit applications.");
+            ExitProcess(1);
+        }
+        else if (!is64bit && gt_x64)
+        {
+            GT_ShowWarning("Game detected 32bit but application trainer is 64 build\nTry to change compiler build for 32bit applications.");
+        }
+    }
+}
+
+static VOID GT_ThrowError(DWORD gt_error_code, LPCSTR gt_func_name, DWORD gt_line_no)
+{
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+    {
+        CHAR err_msg_buf[0xFF] = {'\0'};
+        CHAR sys_err_buf[0xFF] = {'\0'};
         LPSTR ptr = GT_NUL;
         gt_private_method = TRUE;
-
 
         FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                       GT_NULL, gt_error_code,
                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language*/
-                      sys_err_buf, sizeof(sys_err_buf), (va_list*)GT_NULL);
+                      sys_err_buf, sizeof(sys_err_buf), (va_list *)GT_NULL);
 
         /* Trim the end of the line and terminate it with a GT_NULl*/
         ptr = sys_err_buf;
@@ -2668,8 +3340,7 @@ static VOID GT_ShowError(DWORD gt_error_code, LPCSTR gt_func_name, DWORD gt_line
         do
         {
             *ptr-- = '\0';
-        }
-        while ((ptr >= sys_err_buf) && ((*ptr == '.') || (*ptr < 33)));
+        } while ((ptr >= sys_err_buf) && ((*ptr == '.') || (*ptr < 33)));
 
         /*copy error from getLastError() to error buffer.*/
         wsprintf(err_msg_buf, "\nINFO : %s method failed!\nREASON : (%s)\nLINE. : occurred at line no. %d\n", gt_func_name, sys_err_buf, gt_line_no);
@@ -2686,14 +3357,19 @@ static VOID GT_ShowError(DWORD gt_error_code, LPCSTR gt_func_name, DWORD gt_line
     gt_private_method = FALSE;
 }
 
-VOID GT_ShowInfo(LPCSTR info_message)
+VOID GT_ShowInfo(LPCSTR info_msg)
 {
-    MessageBox((HWND)GT_NULL, info_message, "INFO!", MB_ICONINFORMATION);
+    MessageBox((HWND)GT_NULL, info_msg, "INFO!", MB_ICONINFORMATION);
 }
 
-VOID GT_ShowWarning(LPCSTR warning_message)
+VOID GT_ShowWarning(LPCSTR warn_msg)
 {
-    MessageBox((HWND)GT_NULL, warning_message, "WARNING!", MB_ICONWARNING);
+    MessageBox((HWND)GT_NULL, warn_msg, "WARNING!", MB_ICONWARNING);
+}
+
+VOID GT_ShowError(LPCSTR err_msg)
+{
+    MessageBox((HWND)GT_NULL, err_msg, "ERROR!", MB_ICONERROR);
 }
 
 static DWORD GT_GetError(void)
@@ -2740,7 +3416,7 @@ static VOID GT_AddLog(LPCSTR format, ...)
     {
         gt_private_method = TRUE;
         gt_error_code = GT_NIL;
-        CHAR log_buf[0x400] = { GT_NUL };
+        CHAR log_buf[0x400] = {GT_NUL};
         static LPCSTR log_file_name = "GTLibc_logs.log";
 
         INT date_len = GT_NIL;
@@ -2792,7 +3468,7 @@ static VOID GT_AddLog(LPCSTR format, ...)
         }
         gt_catch(gt_error_code)
         {
-            GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+            GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
             gt_private_method = TRUE;
         }
     }
@@ -2897,33 +3573,10 @@ static LPCSTR GT_BoolAlpha(BOOL bool_value)
     LPCSTR bool_alpha = GT_NULL;
     if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
     {
-        bool_alpha = (bool_value == TRUE) ? "SUCCESS" : "FAILURE";
+        bool_alpha = (bool_value == TRUE) ? "TRUE" : "FALSE";
     }
     return bool_alpha;
 }
-
-static VOID GT_GetValueType(LPVOID value, PSIZE_T lp_size, LPCSTR lpstr_value)
-{
-    DWORD truncated = *(PDWORD)value;
-
-    if (*(PDWORD)value == truncated)
-    {
-        *lp_size = sizeof(DWORD64);
-        lstrcpy(lpstr_value, "Int");
-    }
-    else
-    {
-        *lp_size = sizeof(FLOAT);
-        lstrcpy(lpstr_value, "Float");
-    }
-
-    if (GT_IsLogEnabled())
-    {
-        GT_AddLog("%s -> truncated : %u\tSize : %u\tstr_value : %s\n", FUNC_NAME, truncated, *lp_size, lpstr_value);
-        gt_private_method = TRUE;
-    }
-}
-
 
 /*Private memory allocation wrapper methods*/
 LPVOID GT_MemAlloc(DWORD dw_flag, SIZE_T sz_size)
@@ -2948,12 +3601,11 @@ LPVOID GT_MemAlloc(DWORD dw_flag, SIZE_T sz_size)
                     GT_AddLog("%s -> successfully allocated %lu bytes\n", FUNC_NAME, sz_size);
                 }
             }
-
         }
         gt_catch(gt_error_code)
         {
             gt_private_method = TRUE;
-            GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+            GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         }
     }
 
@@ -2987,7 +3639,7 @@ BOOL GT_MemFree(LPVOID gt_mem_block)
         gt_catch(gt_error_code)
         {
             gt_private_method = TRUE;
-            GT_ShowError(gt_error_code, FUNC_NAME, LINE_NO);
+            GT_ThrowError(gt_error_code, FUNC_NAME, LINE_NO);
         }
     }
     gt_private_method = FALSE;
@@ -3001,7 +3653,7 @@ static BOOL GT_IsPrivateMethod(BOOL gt_private_method, LPCSTR gt_func_name, INT 
 
     else
     {
-        CHAR err_buf[0x100] = { GT_NUL };
+        CHAR err_buf[0x100] = {GT_NUL};
         wsprintf(err_buf, "ERROR : %s method failed!\nREASON : Access to private method! (ERROR_INVALID_FUNCTION) \nLINE : occurred at line no. %d", gt_func_name, gt_line_no);
         MessageBox((HWND)GT_NULL, err_buf, "ERROR!", MB_ICONERROR);
 

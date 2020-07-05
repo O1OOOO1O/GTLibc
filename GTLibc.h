@@ -82,6 +82,16 @@ WHATS NEW IN THIS VERSION  V 1.5 :
 [+] Added support for 64bit games to Read/Write address.
 [-] Moved GT_ShowInfo and GT_ShowWarning to Public methods.
 
+WHATS NEW IN THIS VERSION  V 1.6 :
+[+] Updated all Read/Write method to take data size manually.
+[+] Added new Wrapper methods for basic Read/Write functionality Like GT_ReadByte(),GT_Read4Byte(),GT_ReadFloat() etc.
+[+] Added new method GT_GetProcessModule() to get all modules of process and to use it enable 'GT_USE_PROC_MODULES' macro.
+[-] Removed Automatic data size detection due to high error rate.
+[+] Added new method to Resume and Suspend Process/Threads  - GT_SuspendResumeProcess()
+[+] Added new method to detect Game architecture - GT_Is64bitGame()
+[+] Added Automatic Game and Trainers architecture compatibility - 32Bit trainer can't access 64bit games.
+[+] Added new Method to Read/Write single Pointer from address. GT_ReadPointer() and GT_WritePointer()
+[+] Fixed some more errors and cleaned up the code.
 
 V 1.0 -> Dated : 23/03/2018
 V 1.1 -> Dated : 11/04/2018
@@ -89,6 +99,7 @@ V 1.2 -> Dated : 23/04/2018
 V 1.3 -> Dated : 12/08/2018
 V 1.4 -> Dated : 28/08/2018
 V 1.5 -> Dated : 17/10/2019
+V 1.6 -> Dated : 04/07/2020
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -110,12 +121,18 @@ Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 #include <windows.h>
 #include <tlhelp32.h>
 
-/*Defining NULL and NAN constants*/
-#define GT_NIL 0x0 	/*Integer NULL*/
-#define GT_NUL '\0' 	/*Character NULL*/
-#define GT_NULL ((void *)0) /*Pointer NULL*/
+/*Including Conditional Process library*/
+#ifdef GT_USE_PROC_MODULES
+#include <psapi.h>
+#endif
 
+/*Defining NULL and NAN constants*/
+#define GT_NIL 0x0          /*Integer NULL*/
+#define GT_NUL '\0'         /*Character NULL*/
+#define GT_NULL ((void *)0) /*Pointer NULL*/
+#define GT_NULLF 0.0f       /*Floating NULL*/
 #define GT_HotKeysPressed(...) GT_HotKeysDown(__VA_ARGS__, NULL)
+typedef DOUBLE *PDOUBLE;
 
 /*Re-Defining standard constants*/
 #if !defined(FILE_NAME) && !defined(LINE_NO) && !defined(FUNC_NAME)
@@ -131,36 +148,54 @@ Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 /*Defining Architecture Build Type*/
 #if defined(_WIN64)
 #define BUILD_ARCH_64
+static int gt_x64 = 1;
+static int gt_x86 = 0;
 
 #elif defined(_WIN32)
 #define BUILD_ARCH_32
+static int gt_x64 = 0;
+static int gt_x86 = 1;
 #endif
 
 /*Defining exception handling constants*/
 #if !defined(gt_try) && !defined(gt_catch) && !defined(gt_throw)
-#define gt_try BOOL GT_HadError=FALSE;
-#define gt_catch(x) GT_ExitJump:if(GT_HadError)
-#define gt_throw(x) GT_HadError=TRUE;goto GT_ExitJump;
+#define gt_try BOOL GT_HadError = FALSE;
+#define gt_catch(x) \
+    GT_ExitJump:    \
+    if (GT_HadError)
+#define gt_throw(x)     \
+    GT_HadError = TRUE; \
+    goto GT_ExitJump;
 #endif
 
 /*Enum for OPCODE type*/
-typedef enum GT_OPCODE {
+typedef enum GT_OPCODE
+{
     GT_OP_SHORT_JUMP = 0x1,
     GT_OP_NEAR_JUMP = 0x2,
     GT_OP_CALL = 0x3
 } GT_OPCODE;
 
 /*Enum for SHELLCODE type*/
-typedef enum GT_SHELL {
+typedef enum GT_SHELL
+{
     GT_ORIGINAL_SHELL,
-    GT_PATCHED_SHELL,
+    GT_PATCHED_SHELL
 } GT_SHELL;
 
 /*Enum for ASMInject type*/
-typedef enum GT_ASM_TYPE {
-	GT_ORIGINAL_ASM,
-	GT_PATCHED_ASM,
+typedef enum GT_ASM_TYPE
+{
+    GT_ORIGINAL_ASM,
+    GT_PATCHED_ASM
 } GT_ASM_TYPE;
+
+/*Enum for ASMInject type*/
+typedef enum GT_PROC_ACTION
+{
+    GT_PROC_RESUME,
+    GT_PROC_SUSPEND
+} GT_PROC_ACTION;
 
 /****************************************************************************/
 /*********************-PUBLIC-METHODS-***************************************/
@@ -170,27 +205,50 @@ HANDLE GT_FindGameProcess(LPCSTR);
 HWND GT_FindGameWindow(LPCSTR);
 
 /*Public methods to Read/Write values from/at Address.*/
-LPVOID GT_ReadAddress(LPVOID);
-LPVOID GT_ReadAddressOffset(LPVOID,DWORD);
-LPVOID GT_ReadAddressOffsets(LPVOID,DWORD*, SIZE_T);
-BOOL GT_WriteAddress(LPVOID,LPVOID);
-BOOL GT_WriteAddressOffset(LPVOID,DWORD,LPVOID);
-BOOL GT_WriteAddressOffsets(LPVOID,DWORD*, SIZE_T, LPVOID);
+LPVOID GT_ReadAddress(LPVOID, SIZE_T);
+LPVOID GT_ReadAddressOffset(LPVOID, DWORD, SIZE_T);
+LPVOID GT_ReadAddressOffsets(LPVOID, DWORD *, SIZE_T, SIZE_T);
+BOOL GT_WriteAddress(LPVOID, LPVOID, SIZE_T);
+BOOL GT_WriteAddressOffset(LPVOID, DWORD, LPVOID, SIZE_T);
+BOOL GT_WriteAddressOffsets(LPVOID, DWORD *, SIZE_T, LPVOID, SIZE_T);
 
 /*Public methods to Read/Write pointer from/at Address.*/
-LPVOID GT_ReadPointerOffset(LPVOID,DWORD);
-LPVOID GT_ReadPointerOffsets(LPVOID,DWORD*,SIZE_T);
-BOOL GT_WritePointerOffset(LPVOID,DWORD,LPVOID);
-BOOL GT_WritePointerOffsets(LPVOID,DWORD*,SIZE_T,LPVOID);
+BOOL GT_WritePointer(LPVOID,LPVOID, SIZE_T);
+LPVOID GT_ReadPointer(LPVOID,SIZE_T);
+LPVOID GT_ReadPointerOffset(LPVOID, DWORD, SIZE_T);
+LPVOID GT_ReadPointerOffsets(LPVOID, DWORD *, SIZE_T, SIZE_T);
+BOOL GT_WritePointerOffset(LPVOID, DWORD, LPVOID, SIZE_T);
+BOOL GT_WritePointerOffsets(LPVOID, DWORD *, SIZE_T, LPVOID, SIZE_T);
+
+/*Public methods to Read/Write different type of values from/at Address.*/
+BYTE GT_ReadByte(LPVOID);
+BOOL GT_WriteByte(LPVOID, BYTE);
+UINT16 GT_Read2Bytes(LPVOID);
+BOOL GT_Write2Bytes(LPVOID, UINT16);
+UINT32 GT_Read4Bytes(LPVOID);
+BOOL GT_Write4Bytes(LPVOID, UINT32);
+UINT64 GT_Read8Bytes(LPVOID);
+BOOL GT_Write8Bytes(LPVOID, UINT64);
+FLOAT GT_ReadFloat(LPVOID);
+BOOL GT_WriteFloat(LPVOID, FLOAT);
+DOUBLE GT_ReadDouble(LPVOID);
+BOOL GT_WriteDouble(LPVOID, DOUBLE);
+PCHAR GT_ReadString(LPVOID, SIZE_T);
+BOOL GT_WriteString(LPVOID, PCHAR);
 
 /*Public getter methods to get Game Name,Handle,Process ID,base address,static address.*/
 LPCSTR GT_GetGameName(VOID);
 DWORD GT_GetProcessID(VOID);
 HANDLE GT_GetGameHandle4mHWND(HWND);
 DWORD GT_GetProcessID4mHWND(HWND);
-LPBYTE GT_GetGameBaseAddress(DWORD);
-LPVOID GT_GetStaticAddress(DWORD64,DWORD*,SIZE_T,DWORD);
+LPVOID GT_GetGameBaseAddress(DWORD);
+LPVOID GT_GetStaticAddress(DWORD64, DWORD *, SIZE_T, DWORD, SIZE_T);
 
+/*Public methods for Process and modules*/
+LPSTR GT_GetProcessModule(LPSTR);
+void GT_SuspendResumeProcess(DWORD, GT_PROC_ACTION);
+BOOL GT_Is64bitGame(HANDLE);
+void SetGameFocus();
 
 /*Public methods for creating hot-keys*/
 BOOL GT_HotKeysDown(INT, ...);
@@ -208,15 +266,15 @@ VOID GT_DoKeyPress(INT);
 VOID GT_SetCheatCode(LPCSTR);
 
 /*Semi-private Tool for searching in offset area*/
-LPSTR GT_SearchOffsetArea(LPVOID, CONST size_t, CONST size_t, DWORD);
+LPSTR GT_SearchOffsetArea(LPVOID, CONST size_t, CONST size_t, DWORD, SIZE_T);
 
 /*Semi-private Tool for Injecting custom code/DLL*/
 BOOL GT_InjectOpcode(LPVOID, LPCVOID, SIZE_T);
 BOOL GT_InjectOpcodes(LPVOID[], LPBYTE[], SIZE_T[], SIZE_T);
-BOOL GT_InjectDLL(LPCSTR,LPCSTR);
+BOOL GT_InjectDLL(LPCSTR, LPCSTR);
 
 #ifdef GT_BUILD_DLL
-BOOL GT_InjectAsm(LPVOID, LPVOID,INT,GT_ASM_TYPE);
+BOOL GT_InjectAsm(LPVOID, LPVOID, INT, GT_ASM_TYPE);
 DWORD GT_GetJmpBackAddress(LPVOID, DWORD, LPCSTR);
 #endif
 
@@ -228,7 +286,7 @@ BOOL GT_WriteNOPs(LPVOID[], SIZE_T[], SIZE_T);
 BOOL GT_WriteJmpOrCall(LPVOID, LPVOID, GT_OPCODE, UINT);
 
 /*Semi-private Tool for injecting custom shellcode into game*/
-LPVOID GT_InjectShellCode(LPVOID, LPCVOID, SIZE_T, UINT,GT_SHELL,GT_OPCODE);
+LPVOID GT_InjectShellCode(LPVOID, LPCVOID, SIZE_T, UINT, GT_SHELL, GT_OPCODE);
 
 /*Semi private method for enabling/disabling Logs*/
 BOOL GT_EnableLogs(VOID);
@@ -238,15 +296,16 @@ BOOL GT_DisableLogs(VOID);
 HANDLE GT_GetGameHandle(VOID);
 HWND GT_GetGameHWND(VOID);
 
-/*Semi-private methods for showing info/warning*/
+/*Semi-private methods for showing info/warning/error*/
 VOID GT_ShowInfo(LPCSTR);
 VOID GT_ShowWarning(LPCSTR);
+VOID GT_ShowError(LPCSTR);
 
 /****************************************************************************/
 /****************-PRIVATE-METHODS-*******************************************/
 /****************************************************************************/
 /*Private methods for showing error*/
-static VOID GT_ShowError(DWORD, LPCSTR, DWORD);
+static VOID GT_ThrowError(DWORD, LPCSTR, DWORD);
 static DWORD GT_GetError(VOID);
 
 /*Private setter methods for setting Game Name, ID,Handle,HWND etc*/
@@ -269,10 +328,12 @@ static VOID GT_DoVirtualKeyPress(INT, INT, INT);
 static BOOL CALLBACK GT_EnumAllWindows(HWND, LPARAM);
 static BOOL GT_IsPrivateMethod(BOOL, LPCSTR, INT);
 static LPCSTR GT_BoolAlpha(BOOL);
-static VOID GT_GetValueType(LPVOID,PSIZE_T,LPCSTR);
+static VOID GT_GetValueType(LPVOID, PSIZE_T, LPCSTR);
+static BOOL IsWow64(HANDLE);
+static VOID GT_CheckGameTrainerArch(HANDLE);
 
 /*Private core method for injecting shell.*/
-static LPVOID GT_InjectShell(LPVOID,LPCVOID, SIZE_T,GT_SHELL,GT_OPCODE);
+static LPVOID GT_InjectShell(LPVOID, LPCVOID, SIZE_T, GT_SHELL, GT_OPCODE);
 
 /*Global variables for storing game information*/
 extern DWORD gt_process_id;
@@ -289,4 +350,4 @@ extern BOOL gt_private_method;
 /*Global variable for enabling/disabling logs*/
 extern BOOL gt_logs_enabled;
 
-#endif	/* _GTLIBC_H_ */
+#endif /* _GTLIBC_H_ */
