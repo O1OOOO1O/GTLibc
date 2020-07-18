@@ -11,7 +11,7 @@ and not shall be portable or to target other OS like **_Linux_,_MAC OS_** etc.
 and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make reading/writing ,finding Game process easier and convenient.
 
 ## **_Your support is needed to keep this project alive, Feel free to donate._**
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/AzimD)
+[![paypal](https://www.payumoney.com/media/images/payby_payumoney/new_buttons/21.png)](https://www.payumoney.com/paybypayumoney/#/C90A30D6E23A691F68F707F3D1D17BBD)
 
 ## Do check our new game-library for Python aswell [GTLibPy](https://github.com/haseeb-heaven/GTLibPy)
 
@@ -142,7 +142,7 @@ GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
 GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
 GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
 GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
-GTLIBC Version : V 1.6 -> Dated : 04/07/2020<br/>
+GTLIBC Version : V 1.6 Dated : 04/07/2020<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
 **[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
