@@ -142,7 +142,7 @@ GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
 GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
 GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
 GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
-GTLIBC Version : V 1.6 -> Dated : 04/07/2020<br/>
+GTLIBC Version : V 1.6  Dated : 04/07/2020<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
 **[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
@@ -179,7 +179,7 @@ GTLIBC Version : V 1.6 -> Dated : 04/07/2020<br/>
 
 **CHANGE LOGS FOR V 1.6** <br/>
 **[+]** Updated all **Read/Write** methods to take data size manually.<br/>
-**[+]** Added new Wrapper methods for basic Read/Write functionality Like **GT_ReadByte(),GT_Read4Byte(),GT_ReadFloat()** etc.<br/>
+**[+]** Added new Wrapper methods for basic Read/Write functionality Like **GT_Read4Byte(),GT_Write4Byte(),GT_ReadFloat()** etc.<br/>
 **[+]** Added new method **GT_GetProcessModule()** to get all modules of process and to use it enable _GT_USE_PROC_MODULES_ macro.<br/>
 **[-]** Removed Automatic data size detection due to **high error rate**.<br/>
 **[+]** Added new method to Resume and Suspend Process/Threads  - **GT_SuspendResumeProcess()**<br/>
@@ -188,3 +188,11 @@ GTLIBC Version : V 1.6 -> Dated : 04/07/2020<br/>
 **[+]** Added new Method to Read/Write single Pointer from address. **GT_ReadPointer()** and **GT_WritePointer()**<br/>
 **[+]** Fixed some more errors and cleaned up the code.<br/>
 
+
+**CHANGE LOGS FOR V 1.6.1** <br/>
+**[+]** Support to add **Time based** Logs.<br/>
+**[+]** Automatic detection for Elevated process **(Run as Admin)**.<br/>
+**[+]** Added Initialize console trainer method in _GT_Console_ library.<br/>
+**[+]** Added options to compile _GTLibc_ with _C++_ use _cpp_compile_ folder run batch files.<br/>
+
+written and maintained by _Haseeb_ _Mir_ (haseebmir.hm@gmail.com)

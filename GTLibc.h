@@ -47,59 +47,7 @@ All Public and Semi-Private methods are well documented.
 but private methods are not documented as it was not necessary to do so.
 
 VERSION INFO :
-GTLIBC Version : V 1.2
-
-WHATS NEW IN THIS VERSION  v1.1 :
-[+] Added Custom procedure injection and shellcode injection methods for advanced game hacking.
-[+] Added Support for Microsoft's visual studio (MSVC compiler) and for Visual C/CPP.
-[+] Added wrapper memory methods for better Memory management.
-[-] Removed support for Multiple games found in memory.
-[-] Removed feature where application used to exit after showing Error.
-
-WHATS NEW IN THIS VERSION  V 1.2 :
-[+] Added new Console UI integrated Library.
-[+] Added GT Prefix to all methods to differentiate it from regular WINAPI Methods.
-[+] Current time is now calculated from standard MACROS rather than WIN-API time methods.
-[+] Added Private Macros GT_BUILD_CLI for GTConsole library and GT_USE_SOUND to use sound methods.
-[+] Changed try-catch prefix as-well to gt_try-gt-catch to differentiate it from regular CPP try-catch.
-[+] Improved performance and removed buffer overflows.
-
-WHATS NEW IN THIS VERSION  V 1.3 :
-[+] Added architecture/machine detection support.
-[+] Added 64-bit support for shellcode injection.
-[+] Added advanced hacking method DLL injection.
-[+] Improved logs detection method.
-
-WHATS NEW IN THIS VERSION  V 1.4 :
-[+] Added support for reading and writing Float values.
-[+] Improved all read/write methods to adapt generic data types.
-[+] Added new Macros for NULL and NIL.
-
-WHATS NEW IN THIS VERSION  V 1.5 :
-[+] Added new DLL methods for Injecting Assembly code.
-[+] Added new macro GT_BUILD_DLL for Advanced DLL Trainers.
-[+] Added new method to get static address.
-[+] Added support for 64bit games to Read/Write address.
-[-] Moved GT_ShowInfo and GT_ShowWarning to Public methods.
-
-WHATS NEW IN THIS VERSION  V 1.6 :
-[+] Updated all Read/Write method to take data size manually.
-[+] Added new Wrapper methods for basic Read/Write functionality Like GT_ReadByte(),GT_Read4Byte(),GT_ReadFloat() etc.
-[+] Added new method GT_GetProcessModule() to get all modules of process and to use it enable 'GT_USE_PROC_MODULES' macro.
-[-] Removed Automatic data size detection due to high error rate.
-[+] Added new method to Resume and Suspend Process/Threads  - GT_SuspendResumeProcess()
-[+] Added new method to detect Game architecture - GT_Is64bitGame()
-[+] Added Automatic Game and Trainers architecture compatibility - 32Bit trainer can't access 64bit games.
-[+] Added new Method to Read/Write single Pointer from address. GT_ReadPointer() and GT_WritePointer()
-[+] Fixed some more errors and cleaned up the code.
-
-V 1.0 -> Dated : 23/03/2018
-V 1.1 -> Dated : 11/04/2018
-V 1.2 -> Dated : 23/04/2018
-V 1.3 -> Dated : 12/08/2018
-V 1.4 -> Dated : 28/08/2018
-V 1.5 -> Dated : 17/10/2019
-V 1.6 -> Dated : 04/07/2020
+GTLIBC Version : V 1.6.1
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -129,7 +77,7 @@ Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 /*Defining NULL and NAN constants*/
 #define GT_NIL 0x0          /*Integer NULL*/
 #define GT_NUL '\0'         /*Character NULL*/
-#define GT_NULL ((void *)0) /*Pointer NULL*/
+#define GT_NULL NULL /*Pointer NULL*/
 #define GT_NULLF 0.0f       /*Floating NULL*/
 #define GT_HotKeysPressed(...) GT_HotKeysDown(__VA_ARGS__, NULL)
 typedef DOUBLE *PDOUBLE;
@@ -160,12 +108,8 @@ static int gt_x86 = 1;
 /*Defining exception handling constants*/
 #if !defined(gt_try) && !defined(gt_catch) && !defined(gt_throw)
 #define gt_try BOOL GT_HadError = FALSE;
-#define gt_catch(x) \
-    GT_ExitJump:    \
-    if (GT_HadError)
-#define gt_throw(x)     \
-    GT_HadError = TRUE; \
-    goto GT_ExitJump;
+#define gt_catch(x)  GT_ExitJump: if (GT_HadError)
+#define gt_throw(x) GT_HadError = TRUE; goto GT_ExitJump;
 #endif
 
 /*Enum for OPCODE type*/
@@ -190,7 +134,7 @@ typedef enum GT_ASM_TYPE
     GT_PATCHED_ASM
 } GT_ASM_TYPE;
 
-/*Enum for ASMInject type*/
+/*Enum for ProcAction type*/
 typedef enum GT_PROC_ACTION
 {
     GT_PROC_RESUME,
@@ -331,7 +275,8 @@ static LPCSTR GT_BoolAlpha(BOOL);
 static VOID GT_GetValueType(LPVOID, PSIZE_T, LPCSTR);
 static BOOL IsWow64(HANDLE);
 static VOID GT_CheckGameTrainerArch(HANDLE);
-
+static LPSTR GT_GetCurrentTime();
+BOOL GT_IsElevatedProcess();
 /*Private core method for injecting shell.*/
 static LPVOID GT_InjectShell(LPVOID, LPCVOID, SIZE_T, GT_SHELL, GT_OPCODE);
 

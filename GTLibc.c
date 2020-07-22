@@ -112,6 +112,22 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                 p_id = entry.th32ProcessID;
                 p_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 
+                if (p_handle == NULL && p_id > 0)
+                {
+                    BOOL is_elevated = GT_IsElevatedProcess();
+                    if (!is_elevated)
+                    {
+                        CloseHandle(p_handle);
+                        GT_ShowWarning("Try to run this program with admin privileges");
+                        gt_throw(ERROR_FILE_NOT_FOUND);
+                    }
+                    else
+                    {
+                        GT_ShowError("Handle could not be detected for specified process");
+                        gt_throw(ERROR_FILE_NOT_FOUND);
+                    }
+                }
+
                 /*Check game trainer architecture compatibility.*/
                 GT_CheckGameTrainerArch(p_handle);
                 gt_private_method = TRUE;
@@ -1338,7 +1354,7 @@ UINT64 GT_Read8Bytes(LPVOID address)
         gt_private_method = TRUE;
     }
 
-    lp_value = *(PINT64)GT_ReadAddress(address, lp_size);
+    lp_value = *(PUINT64)GT_ReadAddress(address, lp_size);
     gt_private_method = TRUE;
 
     if (GT_IsLogEnabled())
@@ -1783,7 +1799,7 @@ void SetGameFocus()
  * @description - check for Hot keys combinations pressed or not.
  * @param - Combination of hot keys using virtual key_codes or characters A-Z,a-z.
  * @return - If keys pressed it will return TRUE otherwise returns FALSE.
- * PS : Don't use this method directly instead use 'hotKeysPressed' MACRO.
+ * PS : Don't use this method directly instead use 'GT_HotKeysPressed' MACRO.
  */
 
 BOOL GT_HotKeysDown(INT key, ...)
@@ -3409,6 +3425,31 @@ static VOID GT_SetGameHWND(DWORD gt_process_id)
         EnumWindows(GT_EnumAllWindows, (LPARAM)gt_process_id);
 }
 
+static void GT_ShellExec(LPCSTR cmd)
+{
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+        ShellExecute(NULL, "open", "cmd.exe", cmd, NULL, SW_HIDE);
+}
+
+static void GT_ShellExecAdmin(LPCSTR cmd)
+{
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+        ShellExecute(NULL, "runas", "cmd.exe", cmd, NULL, SW_HIDE);
+}
+
+static LPSTR GT_GetCurrentTime()
+{
+    SYSTEMTIME sys_time;
+    static CHAR time_buf[0x50] = {GT_NUL};
+
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+    {
+        GetLocalTime(&sys_time);
+        wsprintf(time_buf, "%u:%u:%u", sys_time.wHour, sys_time.wMinute, sys_time.wSecond);
+    }
+    return time_buf;
+}
+
 /*Custom logger to add logs for trainer.*/
 static VOID GT_AddLog(LPCSTR format, ...)
 {
@@ -3416,7 +3457,7 @@ static VOID GT_AddLog(LPCSTR format, ...)
     {
         gt_private_method = TRUE;
         gt_error_code = GT_NIL;
-        CHAR log_buf[0x400] = {GT_NUL};
+        CHAR log_buf[0x400] = {GT_NUL}, time_buf[1024] = {GT_NUL};
         static LPCSTR log_file_name = "GTLibc_logs.log";
 
         INT date_len = GT_NIL;
@@ -3426,13 +3467,14 @@ static VOID GT_AddLog(LPCSTR format, ...)
         /*Only write data at beginning of file.*/
         if (!date_adder)
         {
-            date_len = wsprintf(log_buf, "\nLog created by GTLibc at : Date : %s\tTime : %s\n", CURR_DATE, CURR_TIME);
+            date_len = wsprintf(log_buf, "\nLog created by GTLibc at Date : %s\tTime : %s\n", CURR_DATE, CURR_TIME);
             date_adder = TRUE;
         }
 
         va_list va_alist;
         va_start(va_alist, format);
-        wvsprintf(log_buf + date_len, format, va_alist);
+        wsprintf(time_buf, "[%s] %s", GT_GetCurrentTime(), format);
+        wvsprintf(log_buf + date_len, time_buf, va_alist);
         va_end(va_alist);
 
         static HANDLE file_handle = GT_NULL;
@@ -3576,6 +3618,29 @@ static LPCSTR GT_BoolAlpha(BOOL bool_value)
         bool_alpha = (bool_value == TRUE) ? "TRUE" : "FALSE";
     }
     return bool_alpha;
+}
+
+BOOL GT_IsElevatedProcess()
+{
+    BOOL is_elevated = FALSE;
+    HANDLE token = NULL;
+    if (GT_IsPrivateMethod(gt_private_method, FUNC_NAME, LINE_NO))
+    {
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        {
+            TOKEN_ELEVATION elevation;
+            DWORD token_sz = sizeof(TOKEN_ELEVATION);
+            if (GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &token_sz))
+            {
+                is_elevated = elevation.TokenIsElevated;
+            }
+        }
+        if (token)
+        {
+            CloseHandle(token);
+        }
+    }
+    return is_elevated;
 }
 
 /*Private memory allocation wrapper methods*/

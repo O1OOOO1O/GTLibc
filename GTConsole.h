@@ -43,15 +43,7 @@ All Public and Semi-Private methods are well documented.
 but private methods are not documented as it was not necessary to do so.
 
 VERSION INFO :
-GTConsole Version : V 1.1
-
-WHATS NEW IN THIS VERSION  v1.1 :
-[+] Added support for console Fonts.
-[+] Added support for clearing input buffer, including characters.
-[+] Fixed GT_ResizeWindow() method for rows and cols issue.
-
-V 1.0 -> Dated : 23/04/2018
-V 1.1 -> Dated : 30/12/2018
+GTConsole Version : V 1.2
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -132,6 +124,9 @@ BOOL GT_MoveWindow(INT,INT,INT,INT);
 BOOL GT_DisableWindowStyle(INT,LONG_PTR);
 BOOL GT_DisableWindowScrollbar(LONG_PTR);
 BOOL GT_GetWindowScreenInfo(INT,PCOORD,PCOORD,PWORD,PSMALL_RECT,PCOORD);
+VOID GT_InitTrainerWindow(LPCSTR,INT,INT,INT,INT);
+VOID GT_InitTrainerWindowEx(LPCSTR,INT,INT,INT,INT,BG_COLORS,FG_COLORS);
+
 
 /*Public console fonts methods.*/
 BOOL GT_GetFontSize(HANDLE,BOOL,PCOORD);

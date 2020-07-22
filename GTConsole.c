@@ -1186,6 +1186,53 @@ BOOL GT_ResetConsole(WORD txt_color, WORD console_color, PCOORD pcoord)
     return reset_status;
 }
 
+/**
+ * @description - Init the trainer window with name and size.
+ * @param
+ * window_name - Name of the trainer window.
+  *x,y - Positions of trainer x and y coords.
+  *width,height - Width and Height of trainer.
+*/
+
+VOID GT_InitTrainerWindow(LPCSTR window_name, int x, int y, int width, int height)
+{
+    /*Defining trainer bg and fg colors*/
+    const BG_COLORS TRAINER_FG = FG_LIGHTCYAN;
+    const BG_COLORS TRAINER_BG = FG_BLACK;
+
+    GT_InitTrainerWindowEx(window_name, x, y, width, height, TRAINER_BG, TRAINER_FG);
+}
+
+/**
+ * @description - Init the trainer window with name and size with provided theme.
+ * @param
+ * window_name - Name of the trainer window.
+  *x,y - Positions of trainer x and y coords.
+  *width,height - Width and Height of trainer.
+  *TRAINER_BG,TRAINER_FG - Background and foreground colors of trainer to apply theme.
+*/
+VOID GT_InitTrainerWindowEx(LPCSTR window_name, int x, int y, int width, int height, BG_COLORS TRAINER_BG, FG_COLORS TRAINER_FG)
+{
+    //set console background color.
+    GT_SetConsoleBGColor(TRAINER_BG);
+
+    //Set console windows text.
+    GT_SetWindowTitle(window_name);
+    GT_SetConsoleTextColor(TRAINER_FG | TRAINER_BG);
+
+    //set console window size.
+    GT_ResizeWindow(x, y, width, height);
+
+    //set console window style.
+    GT_DisableWindowStyle(GWL_STYLE, WS_SIZEBOX | WS_MAXIMIZEBOX);
+
+    //remove vertical scroll bar.
+    GT_DisableWindowScrollbar(WS_VSCROLL);
+
+    //remove blinking cursor.
+    GT_ShowConsoleCursor(FALSE);
+}
+
 
 /*=============================*/
 /* ==== PRIVATE-METHODS.===== */
