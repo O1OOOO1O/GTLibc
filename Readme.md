@@ -10,9 +10,6 @@ and not shall be portable or to target other OS like **_Linux_,_MAC OS_** etc.
 **AIM** : The aim of this library is only to provide the most efficient way of creating game trainer 
 and to provide a layer on top of **WIN-32 API** _cumbersome_ methods and to make reading/writing ,finding Game process easier and convenient.
 
-## **_Your support is needed to keep this project alive, Feel free to donate._**
-[![paypal](https://www.payumoney.com/media/images/payby_payumoney/new_buttons/21.png)](https://www.payumoney.com/paybypayumoney/#/C90A30D6E23A691F68F707F3D1D17BBD)
-
 ## Do check our new game-library for Python aswell [GTLibPy](https://github.com/haseeb-heaven/GTLibPy)
 
 # Online Usage licence : 
