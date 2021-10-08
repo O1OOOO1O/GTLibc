@@ -62,7 +62,7 @@ using **GT_SearchOffsetArea()** method.
 
 ![search_offset_area](https://github.com/haseeb-heaven/GTLibc/blob/master/resources/search_offset_area.jpg?raw=true "")
 
-# Advanced game hacking methods.
+# Advanced game trainer methods.
 
 ## Injecting Opcode(s) into game : 
 
@@ -133,17 +133,18 @@ All Public and Semi-Private methods are well documented.
 but private methods are not documented as it was not necessary to do so.
 
 **VERSION INFO :**<br/>
-GTLIBC Version : V 1.0  Dated : 23/03/2018.<br/>
-GTLIBC Version : V 1.1  Dated : 12/04/2018.<br/>
-GTLIBC Version : V 1.2  Dated : 23/04/2018.<br/>
-GTLIBC Version : V 1.3  Dated : 12/08/2018.<br/>
-GTLIBC Version : V 1.4  Dated : 28/08/2018.<br/>
-GTLIBC Version : V 1.5  Dated : 17/10/2019<br/>
-GTLIBC Version : V 1.6 Dated : 04/07/2020<br/>
-GTLIBC Version : V 1.6.1 Dated : 22/07/2020<br/>
+GTLIBC Version 1.0      Dated : 23/03/2018.<br/>
+GTLIBC Version 1.1      Dated : 12/04/2018.<br/>
+GTLIBC Version 1.2      Dated : 23/04/2018.<br/>
+GTLIBC Version 1.3      Dated : 12/08/2018.<br/>
+GTLIBC Version 1.4      Dated : 28/08/2018.<br/>
+GTLIBC Version 1.5      Dated : 17/10/2019<br/>
+GTLIBC Version 1.6      Dated : 04/07/2020<br/>
+GTLIBC Version 1.6.1    Dated : 22/07/2020<br/>
+GTLIBC Version 1.6.2    Dated : 08/10/2021<br/>
 
 **CHANGE LOGS FOR V 1.1** <br/>
-**[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game hacking. <br/>
+**[+]** Added Custom **_procedure_** injection and **_shellcode_** injection methods for advanced game process. <br/>
 **[+]** Added Support for Microsoft's visual studio (_MSVC_ compiler) and for **Visual C/CPP**. <br/>
 **[+]** Added wrapper memory methods for better Memory management.  <br/>
 **[-]** Removed support for Multiple games found in memory. <br/>
@@ -160,7 +161,7 @@ GTLIBC Version : V 1.6.1 Dated : 22/07/2020<br/>
 **CHANGE LOGS FOR V 1.3** <br/>
 **[+]** Added architecture/machine detection support.<br/>
 **[+]** Added 64-bit support for shellcode injection.<br/>
-**[+]** Added advanced hacking method DLL injection.<br/>
+**[+]** Added advanced game method DLL injection.<br/>
 **[+]** Improved logs detection method.<br/>
 
 **CHANGE LOGS FOR V 1.4** <br/>
@@ -196,6 +197,6 @@ GTLIBC Version : V 1.6.1 Dated : 22/07/2020<br/>
 **CHANGE LOGS FOR V 1.6.2** <br/>
 **[+]** Support to add **Game File based** Logs.<br/>
 **[+]** Added options to supress **(Errors and Warnings)**.<br/>
-**[+]** Added Static library support check _Dir_ **(static_libs)**.<br/>
+**[+]** Added _Static_ and _Shared_ library files check _Dir_ **(static_libs and shared_libs)**.<br/>
 
 written and maintained by _Haseeb_ _Mir_ (haseebmir.hm@gmail.com)
