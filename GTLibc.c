@@ -17,6 +17,12 @@ BOOL gt_private_method = FALSE;
 /*Setting add Logs to disable by default.*/
 BOOL gt_logs_enabled = FALSE;
 
+/*Setting suppress error to false.*/
+BOOL gt_suppress_err = FALSE;
+
+/*Setting suppress error to false.*/
+BOOL gt_suppress_warn = FALSE;
+
 /*Store amount of nops*/
 UINT n_nops = GT_NIL;
 
@@ -118,7 +124,7 @@ HANDLE GT_FindGameProcess(LPCSTR game_name)
                     if (!is_elevated)
                     {
                         CloseHandle(p_handle);
-                        GT_ShowWarning("Try to run this program with admin privileges");
+                        GT_ShowWarning("Try to run this program with Admin privileges");
                         gt_throw(ERROR_FILE_NOT_FOUND);
                     }
                     else
@@ -1320,7 +1326,7 @@ BOOL GT_Write4Bytes(LPVOID address, UINT32 value)
 
     if (GT_IsLogEnabled())
     {
-        GT_AddLog("%s -> trying to write value of size %u from address %p\n", FUNC_NAME, lp_size, address);
+        GT_AddLog("%s -> trying to write value of size %u at address %p\n", FUNC_NAME, lp_size, address);
         gt_private_method = TRUE;
     }
 
@@ -1636,7 +1642,7 @@ LPSTR GT_GetProcessModule(LPSTR module_name)
     }
 
     if (GT_IsLogEnabled())
-        GT_AddLog("%s -> returned : %s \n", FUNC_NAME, modules_list);
+        GT_AddLog("%s -> returned %d modules \n", FUNC_NAME, n_modules);
 
     gt_private_method = FALSE;
 
@@ -1788,7 +1794,7 @@ BOOL GT_Is64bitGame(HANDLE p_handle)
  * @description  - Set game focus to MainWindow - If game is in background.
  */
 
-void SetGameFocus()
+void GT_SetGameFocus()
 {
     HWND gHwnd = GT_GetGameHWND();
     SetForegroundWindow(gHwnd);
@@ -2099,7 +2105,6 @@ BOOL GT_InjectOpcodes(LPVOID lp_addresses[], LPBYTE lp_opcode[], SIZE_T sz_opcod
 
 BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
 {
-
     BOOL inject_status = FALSE;
     gt_private_method = TRUE;
     CHAR dll_path[MAX_PATH];
@@ -2110,6 +2115,14 @@ BOOL GT_InjectDLL(LPCSTR dll_name, LPCSTR process_name)
 
     gt_try
     {
+        //Check if DLL file is present.
+
+        BOOL file_exist = GT_FileExist(dll_name);
+        
+        if(!file_exist){
+            gt_throw(ERROR_FILE_NOT_FOUND);
+        }
+
         /*Getting absolute path of DLL and calculating DLL size*/
         GetFullPathName(dll_name, MAX_PATH, dll_path, GT_NULL);
         dll_size = lstrlen(dll_path) + 1 * sizeof(CHAR);
@@ -2762,6 +2775,28 @@ BOOL GT_DisableLogs(VOID)
 }
 
 /**
+ * INFO : Whether library should suppress all critical errors.
+ * @description - Enable suppress errors in library.
+ * @return - None.
+ */
+
+VOID GT_SuppressErrors(BOOL action)
+{
+    gt_suppress_err = action;
+}
+
+/**
+ * INFO : Whether library should suppress all critical warnings.
+ * @description - Enable suppress warnings in library.
+ * @return - None.
+ */
+
+VOID GT_SuppressWarnings(BOOL action)
+{
+    gt_suppress_warn = action;
+}
+
+/**
  * @description - Get Handle to current game's process.
  * @return - If game found it return Handle to current game's process otherwise returns GT_NULL.
  */
@@ -2848,8 +2883,11 @@ static LPVOID GT_InjectShell(LPVOID lp_origshell_address, LPCVOID lp_shellcode, 
 
         if (GT_IsLogEnabled())
         {
-            LPCSTR shell_type_str = ((shell_type == GT_ORIGINAL_SHELL) ? "ORIGINAL GT_SHELL" : (shell_type == GT_PATCHED_SHELL) ? "PATCHED GT_SHELL" : GT_NUL);
-            LPCSTR opcode_type_str = ((opcode_type == GT_OP_CALL) ? "GT_OPCODE CALL" : (opcode_type == GT_OP_NEAR_JUMP) ? "GT_OPCODE NEAR JUMP" : (opcode_type == GT_OP_SHORT_JUMP) ? "GT_OPCODE SHORT JUMP" : GT_NUL);
+            LPCSTR shell_type_str = ((shell_type == GT_ORIGINAL_SHELL) ? "ORIGINAL GT_SHELL" : (shell_type == GT_PATCHED_SHELL) ? "PATCHED GT_SHELL"
+                                                                                                                                : GT_NUL);
+            LPCSTR opcode_type_str = ((opcode_type == GT_OP_CALL) ? "GT_OPCODE CALL" : (opcode_type == GT_OP_NEAR_JUMP) ? "GT_OPCODE NEAR JUMP"
+                                                                                   : (opcode_type == GT_OP_SHORT_JUMP)  ? "GT_OPCODE SHORT JUMP"
+                                                                                                                        : GT_NUL);
 
             GT_AddLog("%s -> Injecting %s\tat Original address : %p\twith %s\n", FUNC_NAME, shell_type_str, lp_origshell_address, opcode_type_str);
             gt_private_method = TRUE;
@@ -3324,12 +3362,12 @@ static VOID GT_CheckGameTrainerArch(HANDLE p_handle)
 
         if (is64bit && gt_x86)
         {
-            GT_ShowError("Game detected 64bit but application trainer is 32 bit\nTry to change compiler build for 64bit applications.");
+            GT_ShowError("Game detected 64bit but application trainer is 32bit\nTry to change compiler build for 64bit applications.");
             ExitProcess(1);
         }
         else if (!is64bit && gt_x64)
         {
-            GT_ShowWarning("Game detected 32bit but application trainer is 64 build\nTry to change compiler build for 32bit applications.");
+            GT_ShowWarning("Game detected 32bit but application trainer is 64bit\nTry to change compiler build for 32bit applications.");
         }
     }
 }
@@ -3362,7 +3400,8 @@ static VOID GT_ThrowError(DWORD gt_error_code, LPCSTR gt_func_name, DWORD gt_lin
         wsprintf(err_msg_buf, "\nINFO : %s method failed!\nREASON : (%s)\nLINE. : occurred at line no. %d\n", gt_func_name, sys_err_buf, gt_line_no);
 
         /*Show error from error buffer.*/
-        MessageBox((HWND)GT_NULL, err_msg_buf, "ERROR!", MB_ICONERROR);
+        if (!gt_suppress_err)
+            MessageBox((HWND)GT_NULL, err_msg_buf, "ERROR!", MB_ICONERROR);
 
         if (GT_IsLogEnabled())
         {
@@ -3380,12 +3419,14 @@ VOID GT_ShowInfo(LPCSTR info_msg)
 
 VOID GT_ShowWarning(LPCSTR warn_msg)
 {
-    MessageBox((HWND)GT_NULL, warn_msg, "WARNING!", MB_ICONWARNING);
+    if (!gt_suppress_warn)
+        MessageBox((HWND)GT_NULL, warn_msg, "WARNING!", MB_ICONWARNING);
 }
 
 VOID GT_ShowError(LPCSTR err_msg)
 {
-    MessageBox((HWND)GT_NULL, err_msg, "ERROR!", MB_ICONERROR);
+    if (!gt_suppress_err)
+        MessageBox((HWND)GT_NULL, err_msg, "ERROR!", MB_ICONERROR);
 }
 
 static DWORD GT_GetError(void)
@@ -3457,12 +3498,18 @@ static VOID GT_AddLog(LPCSTR format, ...)
     {
         gt_private_method = TRUE;
         gt_error_code = GT_NIL;
-        CHAR log_buf[0x400] = {GT_NUL}, time_buf[1024] = {GT_NUL};
-        static LPCSTR log_file_name = "GTLibc_logs.log";
-
         INT date_len = GT_NIL;
         static BOOL date_adder = FALSE;
         static BOOL file_checker = FALSE;
+
+        CHAR log_buf[0x400] = {GT_NUL}, time_buf[1024] = {GT_NUL};
+        static LPCSTR log_file_name = "GTLibc_logs.log";
+        int game_name_len = lstrlen(gt_game_name);
+
+        if (game_name_len > 0 && !file_checker)
+        {
+            log_file_name = strcat(gt_game_name, "_logs.log");
+        }
 
         /*Only write data at beginning of file.*/
         if (!date_adder)
@@ -3491,6 +3538,7 @@ static VOID GT_AddLog(LPCSTR format, ...)
                 file_handle = CreateFile(log_file_name, FILE_WRITE_DATA, GT_NIL, (LPSECURITY_ATTRIBUTES)GT_NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, GT_NULL);
             }
             file_checker = TRUE;
+            gt_game_name[game_name_len] = GT_NUL;
         }
 
         gt_try

@@ -169,6 +169,7 @@ BOOL GT_SetConsoleCursorXY(SHORT,SHORT);
 
 /*Semi-Private methods for Writing and reading text.*/
 DWORD GT_WriteConsole(LPCSTR, ...);
+DWORD GT_WriteConsoleBuf(LPCSTR);								 
 DWORD GT_ReadConsole(LPVOID,DWORD,DWORD);
 
 /*Semi-Private methods for Reset console attributes and Blink text*/

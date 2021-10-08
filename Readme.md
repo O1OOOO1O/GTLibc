@@ -193,4 +193,9 @@ GTLIBC Version : V 1.6.1 Dated : 22/07/2020<br/>
 **[+]** Added Initialize console trainer method in _GT_Console_ library.<br/>
 **[+]** Added options to compile _GTLibc_ with _C++_ use _cpp_compile_ folder run batch files.<br/>
 
+**CHANGE LOGS FOR V 1.6.2** <br/>
+**[+]** Support to add **Game File based** Logs.<br/>
+**[+]** Added options to supress **(Errors and Warnings)**.<br/>
+**[+]** Added Static library support check _Dir_ **(static_libs)**.<br/>
+
 written and maintained by _Haseeb_ _Mir_ (haseebmir.hm@gmail.com)

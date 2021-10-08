@@ -47,7 +47,7 @@ All Public and Semi-Private methods are well documented.
 but private methods are not documented as it was not necessary to do so.
 
 VERSION INFO :
-GTLIBC Version : V 1.6.1
+GTLIBC Version : V 1.6.2
 
 Written by Ha5eeB Mir (haseebmir.hm@gmail.com)
 */
@@ -192,7 +192,7 @@ LPVOID GT_GetStaticAddress(DWORD64, DWORD *, SIZE_T, DWORD, SIZE_T);
 LPSTR GT_GetProcessModule(LPSTR);
 void GT_SuspendResumeProcess(DWORD, GT_PROC_ACTION);
 BOOL GT_Is64bitGame(HANDLE);
-void SetGameFocus();
+void GT_SetGameFocus();
 
 /*Public methods for creating hot-keys*/
 BOOL GT_HotKeysDown(INT, ...);
@@ -235,6 +235,10 @@ LPVOID GT_InjectShellCode(LPVOID, LPCVOID, SIZE_T, UINT, GT_SHELL, GT_OPCODE);
 /*Semi private method for enabling/disabling Logs*/
 BOOL GT_EnableLogs(VOID);
 BOOL GT_DisableLogs(VOID);
+
+/*Semi private method for enabling/disabling Errors/Warnings*/
+VOID GT_SuppressErrors(BOOL action);
+VOID GT_SuppressWarnings(BOOL action);
 
 /*Semi-private getter methods to get Game,Handle,HWND.*/
 HANDLE GT_GetGameHandle(VOID);

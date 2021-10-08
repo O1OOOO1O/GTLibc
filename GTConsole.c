@@ -1043,7 +1043,7 @@ DWORD GT_WriteConsole(LPCSTR format, ...)
 {
     DWORD dw_nChars = NIL;
     HANDLE console_handle = GT_GetConsoleStdHandle(STD_OUTPUT_HANDLE);
-    CHAR format_buf[0x100] = { NUL };
+    CHAR format_buf[2048] = { NUL };
 
     va_list va_alist;
     va_start(va_alist, format);
@@ -1065,6 +1065,39 @@ DWORD GT_WriteConsole(LPCSTR format, ...)
 }
 
 /**
+/**
+ * @description - Write buffer text on console .
+ * @param - format_buf [in] - Buffer containing text.
+ * @return -  If the function succeeds, the return value is number of characters written on console.
+ * If the function fails, the return value is zero.
+*/
+
+DWORD GT_WriteConsoleBuf(LPCSTR format_buf)
+{
+    DWORD dw_nChars = NIL;
+    HANDLE console_handle = GT_GetConsoleStdHandle(STD_OUTPUT_HANDLE);
+    INT format_buf_sz = lstrlen(format_buf);
+    gt_try
+    {
+        if (!WriteConsole(console_handle, format_buf, format_buf_sz, &dw_nChars, NULL))
+        {
+            gt_private_cmethod = TRUE;
+            gt_throw(GT_GetCError());
+        }
+
+        if (!(HeapFree(GetProcessHeap(), 0, format_buf)))
+        {
+            gt_private_cmethod = TRUE;
+            gt_throw(GT_GetCError());
+        }
+    }
+        gt_catch(gt_cerror_code)
+    {
+        GT_ShowCError(gt_cerror_code, FUNC_NAME, LINE_NO);
+    }
+    gt_private_cmethod = FALSE;
+    return dw_nChars;
+}												
  * @description - Reads input from the console.
  * @param - lp_buf [out] - A pointer to a buffer that receives the data read from the console.
  * dw_nChars [in] - The number of characters to be read.
